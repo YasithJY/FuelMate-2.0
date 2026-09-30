@@ -1,0 +1,597 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F158306D230700A1B0A4 /* FuelMateApp.swift */; };
+		BA66F15B306D230700A1B0A4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F15A306D230700A1B0A4 /* ContentView.swift */; };
+		BA66F15D306D230700A1B0A4 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F15C306D230700A1B0A4 /* Item.swift */; };
+		BA66F15F306D230F00A1B0A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F15E306D230F00A1B0A4 /* Assets.xcassets */; };
+		BA66F162306D230F00A1B0A4 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */; };
+		BA66F16C306D231000A1B0A4 /* FuelMateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F16B306D231000A1B0A4 /* FuelMateTests.swift */; };
+		BA66F176306D231100A1B0A4 /* FuelMateUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F175306D231100A1B0A4 /* FuelMateUITests.swift */; };
+		BA66F178306D231100A1B0A4 /* FuelMateUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F177306D231100A1B0A4 /* FuelMateUITestsLaunchTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BA66F168306D231000A1B0A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BA66F14D306D230600A1B0A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BA66F154306D230600A1B0A4;
+			remoteInfo = FuelMate;
+		};
+		BA66F172306D231100A1B0A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BA66F14D306D230600A1B0A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BA66F154306D230600A1B0A4;
+			remoteInfo = FuelMate;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		BA66F155306D230700A1B0A4 /* FuelMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FuelMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA66F158306D230700A1B0A4 /* FuelMateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateApp.swift; sourceTree = "<group>"; };
+		BA66F15A306D230700A1B0A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BA66F15C306D230700A1B0A4 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		BA66F15E306D230F00A1B0A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		BA66F167306D231000A1B0A4 /* FuelMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FuelMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA66F16B306D231000A1B0A4 /* FuelMateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateTests.swift; sourceTree = "<group>"; };
+		BA66F171306D231100A1B0A4 /* FuelMateUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FuelMateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA66F175306D231100A1B0A4 /* FuelMateUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateUITests.swift; sourceTree = "<group>"; };
+		BA66F177306D231100A1B0A4 /* FuelMateUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BA66F152306D230600A1B0A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F164306D231000A1B0A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F16E306D231100A1B0A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BA66F14C306D230600A1B0A4 = {
+			isa = PBXGroup;
+			children = (
+				BA66F157306D230700A1B0A4 /* FuelMate */,
+				BA66F16A306D231000A1B0A4 /* FuelMateTests */,
+				BA66F174306D231100A1B0A4 /* FuelMateUITests */,
+				BA66F156306D230700A1B0A4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BA66F156306D230700A1B0A4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BA66F155306D230700A1B0A4 /* FuelMate.app */,
+				BA66F167306D231000A1B0A4 /* FuelMateTests.xctest */,
+				BA66F171306D231100A1B0A4 /* FuelMateUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BA66F157306D230700A1B0A4 /* FuelMate */ = {
+			isa = PBXGroup;
+			children = (
+				BA66F158306D230700A1B0A4 /* FuelMateApp.swift */,
+				BA66F15A306D230700A1B0A4 /* ContentView.swift */,
+				BA66F15C306D230700A1B0A4 /* Item.swift */,
+				BA66F15E306D230F00A1B0A4 /* Assets.xcassets */,
+				BA66F160306D230F00A1B0A4 /* Preview Content */,
+			);
+			path = FuelMate;
+			sourceTree = "<group>";
+		};
+		BA66F160306D230F00A1B0A4 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		BA66F16A306D231000A1B0A4 /* FuelMateTests */ = {
+			isa = PBXGroup;
+			children = (
+				BA66F16B306D231000A1B0A4 /* FuelMateTests.swift */,
+			);
+			path = FuelMateTests;
+			sourceTree = "<group>";
+		};
+		BA66F174306D231100A1B0A4 /* FuelMateUITests */ = {
+			isa = PBXGroup;
+			children = (
+				BA66F175306D231100A1B0A4 /* FuelMateUITests.swift */,
+				BA66F177306D231100A1B0A4 /* FuelMateUITestsLaunchTests.swift */,
+			);
+			path = FuelMateUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BA66F154306D230600A1B0A4 /* FuelMate */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BA66F17B306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMate" */;
+			buildPhases = (
+				BA66F151306D230600A1B0A4 /* Sources */,
+				BA66F152306D230600A1B0A4 /* Frameworks */,
+				BA66F153306D230600A1B0A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FuelMate;
+			productName = FuelMate;
+			productReference = BA66F155306D230700A1B0A4 /* FuelMate.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BA66F166306D231000A1B0A4 /* FuelMateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BA66F17E306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMateTests" */;
+			buildPhases = (
+				BA66F163306D231000A1B0A4 /* Sources */,
+				BA66F164306D231000A1B0A4 /* Frameworks */,
+				BA66F165306D231000A1B0A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BA66F169306D231000A1B0A4 /* PBXTargetDependency */,
+			);
+			name = FuelMateTests;
+			productName = FuelMateTests;
+			productReference = BA66F167306D231000A1B0A4 /* FuelMateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		BA66F170306D231100A1B0A4 /* FuelMateUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BA66F181306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMateUITests" */;
+			buildPhases = (
+				BA66F16D306D231100A1B0A4 /* Sources */,
+				BA66F16E306D231100A1B0A4 /* Frameworks */,
+				BA66F16F306D231100A1B0A4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BA66F173306D231100A1B0A4 /* PBXTargetDependency */,
+			);
+			name = FuelMateUITests;
+			productName = FuelMateUITests;
+			productReference = BA66F171306D231100A1B0A4 /* FuelMateUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BA66F14D306D230600A1B0A4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					BA66F154306D230600A1B0A4 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					BA66F166306D231000A1B0A4 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = BA66F154306D230600A1B0A4;
+					};
+					BA66F170306D231100A1B0A4 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = BA66F154306D230600A1B0A4;
+					};
+				};
+			};
+			buildConfigurationList = BA66F150306D230600A1B0A4 /* Build configuration list for PBXProject "FuelMate" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = BA66F14C306D230600A1B0A4;
+			productRefGroup = BA66F156306D230700A1B0A4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BA66F154306D230600A1B0A4 /* FuelMate */,
+				BA66F166306D231000A1B0A4 /* FuelMateTests */,
+				BA66F170306D231100A1B0A4 /* FuelMateUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BA66F153306D230600A1B0A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA66F162306D230F00A1B0A4 /* Preview Assets.xcassets in Resources */,
+				BA66F15F306D230F00A1B0A4 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F165306D231000A1B0A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F16F306D231100A1B0A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BA66F151306D230600A1B0A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA66F15B306D230700A1B0A4 /* ContentView.swift in Sources */,
+				BA66F15D306D230700A1B0A4 /* Item.swift in Sources */,
+				BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F163306D231000A1B0A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA66F16C306D231000A1B0A4 /* FuelMateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BA66F16D306D231100A1B0A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA66F178306D231100A1B0A4 /* FuelMateUITestsLaunchTests.swift in Sources */,
+				BA66F176306D231100A1B0A4 /* FuelMateUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BA66F169306D231000A1B0A4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BA66F154306D230600A1B0A4 /* FuelMate */;
+			targetProxy = BA66F168306D231000A1B0A4 /* PBXContainerItemProxy */;
+		};
+		BA66F173306D231100A1B0A4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BA66F154306D230600A1B0A4 /* FuelMate */;
+			targetProxy = BA66F172306D231100A1B0A4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		BA66F179306D231100A1B0A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		BA66F17A306D231100A1B0A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		BA66F17C306D231100A1B0A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FuelMate/Preview Content\"";
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMate;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BA66F17D306D231100A1B0A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FuelMate/Preview Content\"";
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMate;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BA66F17F306D231100A1B0A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FuelMate.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FuelMate";
+			};
+			name = Debug;
+		};
+		BA66F180306D231100A1B0A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMateTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FuelMate.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FuelMate";
+			};
+			name = Release;
+		};
+		BA66F182306D231100A1B0A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMateUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FuelMate;
+			};
+			name = Debug;
+		};
+		BA66F183306D231100A1B0A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yasith.FuelMateUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FuelMate;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BA66F150306D230600A1B0A4 /* Build configuration list for PBXProject "FuelMate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA66F179306D231100A1B0A4 /* Debug */,
+				BA66F17A306D231100A1B0A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BA66F17B306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA66F17C306D231100A1B0A4 /* Debug */,
+				BA66F17D306D231100A1B0A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BA66F17E306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA66F17F306D231100A1B0A4 /* Debug */,
+				BA66F180306D231100A1B0A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BA66F181306D231100A1B0A4 /* Build configuration list for PBXNativeTarget "FuelMateUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA66F182306D231100A1B0A4 /* Debug */,
+				BA66F183306D231100A1B0A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BA66F14D306D230600A1B0A4 /* Project object */;
+}
