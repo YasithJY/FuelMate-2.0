@@ -7,9 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FA0000020000000000000001 /* AddLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000001 /* AddLogView.swift */; };
+		FA0000020000000000000002 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000002 /* DashboardView.swift */; };
+		FA0000020000000000000003 /* FuelLogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000003 /* FuelLogViewModel.swift */; };
+		FA0000020000000000000004 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000004 /* HistoryView.swift */; };
+		FA0000020000000000000005 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000005 /* LocationManager.swift */; };
+		FA0000020000000000000006 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000006 /* PersistenceController.swift */; };
+		FA0000020000000000000007 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000007 /* Theme.swift */; };
+		FA0000020000000000000008 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000008 /* UnitSettings.swift */; };
+		FA0000020000000000000009 /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000009 /* AnalyticsView.swift */; };
+		FA000002000000000000000A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000A /* SettingsView.swift */; };
+		FA000002000000000000000B /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000B /* MainTabView.swift */; };
+		FA000002000000000000000C /* ReceiptScannerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000C /* ReceiptScannerService.swift */; };
+		FA000002000000000000000D /* StationSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000D /* StationSearchService.swift */; };
+		FA000002000000000000000E /* ReceiptScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000E /* ReceiptScannerView.swift */; };
+		FA000002000000000000000F /* StationPickerMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000F /* StationPickerMapView.swift */; };
+		FA0000020000000000000010 /* VehicleManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000010 /* VehicleManagementView.swift */; };
 		BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F158306D230700A1B0A4 /* FuelMateApp.swift */; };
-		BA66F15B306D230700A1B0A4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F15A306D230700A1B0A4 /* ContentView.swift */; };
-		BA66F15D306D230700A1B0A4 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F15C306D230700A1B0A4 /* Item.swift */; };
 		BA66F15F306D230F00A1B0A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F15E306D230F00A1B0A4 /* Assets.xcassets */; };
 		BA66F162306D230F00A1B0A4 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */; };
 		BA66F16C306D231000A1B0A4 /* FuelMateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F16B306D231000A1B0A4 /* FuelMateTests.swift */; };
@@ -35,10 +49,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		FA0000010000000000000001 /* AddLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/AddLogView.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000002 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/DashboardView.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000003 /* FuelLogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ViewModels/FuelLogViewModel.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000004 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/HistoryView.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000005 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/LocationManager.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000006 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/PersistenceController.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000007 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		FA0000010000000000000008 /* UnitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/UnitSettings.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000009 /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/AnalyticsView.swift"; sourceTree = "<group>"; };
+		FA000001000000000000000A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/SettingsView.swift"; sourceTree = "<group>"; };
+		FA000001000000000000000B /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		FA000001000000000000000C /* ReceiptScannerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/ReceiptScannerService.swift"; sourceTree = "<group>"; };
+		FA000001000000000000000D /* StationSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/StationSearchService.swift"; sourceTree = "<group>"; };
+		FA000001000000000000000E /* ReceiptScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/ReceiptScannerView.swift"; sourceTree = "<group>"; };
+		FA000001000000000000000F /* StationPickerMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/StationPickerMapView.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000010 /* VehicleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/VehicleManagementView.swift"; sourceTree = "<group>"; };
 		BA66F155306D230700A1B0A4 /* FuelMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FuelMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA66F158306D230700A1B0A4 /* FuelMateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateApp.swift; sourceTree = "<group>"; };
-		BA66F15A306D230700A1B0A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		BA66F15C306D230700A1B0A4 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		BA66F15E306D230F00A1B0A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		BA66F167306D231000A1B0A4 /* FuelMateTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FuelMateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,9 +124,23 @@
 		BA66F157306D230700A1B0A4 /* FuelMate */ = {
 			isa = PBXGroup;
 			children = (
+				FA0000010000000000000001 /* AddLogView.swift */,
+				FA0000010000000000000002 /* DashboardView.swift */,
+				FA0000010000000000000003 /* FuelLogViewModel.swift */,
+				FA0000010000000000000004 /* HistoryView.swift */,
+				FA0000010000000000000005 /* LocationManager.swift */,
+				FA0000010000000000000006 /* PersistenceController.swift */,
+				FA0000010000000000000007 /* Theme.swift */,
+				FA0000010000000000000008 /* UnitSettings.swift */,
+				FA0000010000000000000009 /* AnalyticsView.swift */,
+				FA000001000000000000000A /* SettingsView.swift */,
+				FA000001000000000000000B /* MainTabView.swift */,
+				FA000001000000000000000C /* ReceiptScannerService.swift */,
+				FA000001000000000000000D /* StationSearchService.swift */,
+				FA000001000000000000000E /* ReceiptScannerView.swift */,
+				FA000001000000000000000F /* StationPickerMapView.swift */,
+				FA0000010000000000000010 /* VehicleManagementView.swift */,
 				BA66F158306D230700A1B0A4 /* FuelMateApp.swift */,
-				BA66F15A306D230700A1B0A4 /* ContentView.swift */,
-				BA66F15C306D230700A1B0A4 /* Item.swift */,
 				BA66F15E306D230F00A1B0A4 /* Assets.xcassets */,
 				BA66F160306D230F00A1B0A4 /* Preview Content */,
 			);
@@ -260,8 +302,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BA66F15B306D230700A1B0A4 /* ContentView.swift in Sources */,
-				BA66F15D306D230700A1B0A4 /* Item.swift in Sources */,
+				FA0000020000000000000001 /* AddLogView.swift in Sources */,
+				FA0000020000000000000002 /* DashboardView.swift in Sources */,
+				FA0000020000000000000003 /* FuelLogViewModel.swift in Sources */,
+				FA0000020000000000000004 /* HistoryView.swift in Sources */,
+				FA0000020000000000000005 /* LocationManager.swift in Sources */,
+				FA0000020000000000000006 /* PersistenceController.swift in Sources */,
+				FA0000020000000000000007 /* Theme.swift in Sources */,
+				FA0000020000000000000008 /* UnitSettings.swift in Sources */,
+				FA0000020000000000000009 /* AnalyticsView.swift in Sources */,
+				FA000002000000000000000A /* SettingsView.swift in Sources */,
+				FA000002000000000000000B /* MainTabView.swift in Sources */,
+				FA000002000000000000000C /* ReceiptScannerService.swift in Sources */,
+				FA000002000000000000000D /* StationSearchService.swift in Sources */,
+				FA000002000000000000000E /* ReceiptScannerView.swift in Sources */,
+				FA000002000000000000000F /* StationPickerMapView.swift in Sources */,
+				FA0000020000000000000010 /* VehicleManagementView.swift in Sources */,
 				BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -429,6 +485,9 @@
 				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "FuelMate uses the camera to scan fuel receipts.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FuelMate uses your location to record the fuel station coordinates.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FuelMate requires access to photos to select fuel receipts for scanning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -458,6 +517,9 @@
 				DEVELOPMENT_TEAM = Y78KZ3C5Q4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "FuelMate uses the camera to scan fuel receipts.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FuelMate uses your location to record the fuel station coordinates.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "FuelMate requires access to photos to select fuel receipts for scanning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
