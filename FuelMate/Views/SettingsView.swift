@@ -152,6 +152,24 @@ public struct SettingsView: View {
                 
                 // Section 5: Architecture & About
                 Section(header: Text("About FuelMate")) {
+                    HStack(spacing: 16) {
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 54, height: 54)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.12), radius: 4, x: 0, y: 2)
+                        
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("FuelMate 2.0")
+                                .font(.headline)
+                            Text("Vehicle Fuel & Expense Tracker")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    
                     HStack {
                         Text("Version")
                         Spacer()

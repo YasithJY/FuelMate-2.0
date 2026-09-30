@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="LOGO.png" alt="FuelMate Logo" width="160" style="border-radius: 28px;" />
+</p>
+
 # ⛽ FuelMate 2.0 — Vehicle Fuel & Expense Tracker
 
 [![iOS 17.2+](https://img.shields.io/badge/iOS-17.2%2B-blue.svg?logo=apple&style=flat-square)](https://developer.apple.com/ios/)
@@ -72,7 +76,7 @@
   * Currency: **LKR (`Rs.`)** with instant toggle to USD (`$`), EUR (`€`), GBP (`£`), INR (`₹`), etc.
   * Units: **Metric (km, Liters, km/L, Rs/L)** with toggle to Imperial (Miles, Gallons, MPG).
 * **RFC-4180 CSV Export**: One-tap export via `ShareLink` for Excel, Numbers, and Google Sheets.
-* **Light & Dark Mode App Icons**: Uses `logolight.png` in Light Mode and `logodark.png` in Dark Mode.
+* **High-Resolution App Icon**: Modernized branding using `LOGO.png` across universal iOS 17+ app icon asset catalog and in-app settings.
 
 ---
 
