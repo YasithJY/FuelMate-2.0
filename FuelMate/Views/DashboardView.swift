@@ -144,74 +144,105 @@ public struct DashboardView: View {
     
     // MARK: - Vehicle Profile Banner
     private var vehicleProfileBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: viewModel.selectedVehicle?.iconName ?? "car.side.fill")
-                .font(.title2)
-                .foregroundStyle(AppTheme.primaryGradient)
-                .frame(width: 44, height: 44)
-                .background(Color.blue.opacity(0.12))
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(viewModel.selectedVehicle?.name ?? "Active Vehicle")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    if let plate = viewModel.selectedVehicle?.plateNumber, !plate.isEmpty {
-                        Text(plate)
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.secondary.opacity(0.12))
-                            .clipShape(Capsule())
+        Button(action: {
+            Haptics.light()
+            showingVehicleSheet = true
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: viewModel.selectedVehicle?.iconName ?? "car.side.fill")
+                    .font(.title2)
+                    .foregroundStyle(AppTheme.primaryGradient)
+                    .frame(width: 44, height: 44)
+                    .background(Color.blue.opacity(0.12))
+                    .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    if let vehicle = viewModel.selectedVehicle {
+                        HStack(spacing: 6) {
+                            Text(vehicle.name)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            if let plate = vehicle.plateNumber, !plate.isEmpty {
+                                Text(plate)
+                                    .font(.caption2)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.12))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        
+                        HStack(spacing: 6) {
+                            if let lastOdo = viewModel.latestLog?.odometer {
+                                Text("Odo: \(settings.formatDistance(lastOdo))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else if vehicle.initialOdometer > 0 {
+                                Text("Odo: \(settings.formatDistance(vehicle.initialOdometer))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("Ready to track")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Text("•")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Text("Target: \(String(format: "%.1f", settings.targetEfficiency)) \(settings.unitSystem.efficiencyUnit)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        Text("No Vehicle Added")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text("Tap to register your first vehicle")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
-                HStack(spacing: 6) {
-                    if let lastOdo = viewModel.latestLog?.odometer {
-                        Text("Odo: \(settings.formatDistance(lastOdo))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    } else if let initOdo = viewModel.selectedVehicle?.initialOdometer, initOdo > 0 {
-                        Text("Odo: \(settings.formatDistance(initOdo))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text("Ready to track")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                Spacer()
+                
+                if viewModel.selectedVehicle == nil {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Add")
                     }
-                    
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Target: \(String(format: "%.1f", settings.targetEfficiency)) \(settings.unitSystem.efficiencyUnit)")
+                    .font(.caption)
+                    .bold()
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(AppTheme.primaryGradient)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+                } else if viewModel.averageEfficiency > 0 {
+                    let ratio = viewModel.averageEfficiency / max(settings.targetEfficiency, 1.0)
+                    HStack(spacing: 4) {
+                        Image(systemName: ratio >= 1.0 ? "arrow.up.right" : "arrow.down.right")
+                        Text("\(Int(ratio * 100))%")
+                    }
+                    .font(.caption)
+                    .bold()
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(ratio >= 1.0 ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                    .foregroundColor(ratio >= 1.0 ? .green : .orange)
+                    .clipShape(Capsule())
+                } else {
+                    Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
-            Spacer()
-            
-            // Goal Achievement Badge
-            if viewModel.averageEfficiency > 0 {
-                let ratio = viewModel.averageEfficiency / max(settings.targetEfficiency, 1.0)
-                HStack(spacing: 4) {
-                    Image(systemName: ratio >= 1.0 ? "arrow.up.right" : "arrow.down.right")
-                    Text("\(Int(ratio * 100))%")
-                }
-                .font(.caption)
-                .bold()
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(ratio >= 1.0 ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                .foregroundColor(ratio >= 1.0 ? .green : .orange)
-                .clipShape(Capsule())
-            }
+            .modernCard(padding: 12)
         }
-        .modernCard(padding: 12)
+        .buttonStyle(.plain)
     }
     
     // MARK: - Quick Action Bar

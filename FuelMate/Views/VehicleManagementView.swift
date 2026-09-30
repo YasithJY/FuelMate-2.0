@@ -21,34 +21,57 @@ public struct VehicleManagementView: View {
                     header: Text("Tracked Vehicles"),
                     footer: Text("Tap a vehicle to make it the active vehicle for Dashboard, Analytics, and Fuel History.")
                 ) {
-                    ForEach(viewModel.vehicles) { vehicle in
-                        VehicleRowView(
-                            vehicle: vehicle,
-                            isSelected: viewModel.selectedVehicle?.id == vehicle.id,
-                            onSelect: {
-                                Haptics.selection()
-                                viewModel.selectVehicle(vehicle)
-                            },
-                            onEdit: {
-                                editingVehicle = vehicle
+                    if viewModel.vehicles.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "car.2.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary)
+                            Text("No Vehicles Registered")
+                                .font(.headline)
+                            Text("Add your vehicle to start logging fuel fill-ups and tracking consumption.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            Button(action: {
+                                Haptics.medium()
+                                showingAddSheet = true
+                            }) {
+                                Label("Add First Vehicle", systemImage: "plus")
+                                    .bold()
                             }
-                        )
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if viewModel.vehicles.count > 1 {
+                            .buttonStyle(.borderedProminent)
+                            .padding(.top, 4)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                    } else {
+                        ForEach(viewModel.vehicles) { vehicle in
+                            VehicleRowView(
+                                vehicle: vehicle,
+                                isSelected: viewModel.selectedVehicle?.id == vehicle.id,
+                                onSelect: {
+                                    Haptics.selection()
+                                    viewModel.selectVehicle(vehicle)
+                                },
+                                onEdit: {
+                                    editingVehicle = vehicle
+                                }
+                            )
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     vehicleToDelete = vehicle
                                     showingDeleteAlert = true
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
+                                
+                                Button {
+                                    editingVehicle = vehicle
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
                             }
-                            
-                            Button {
-                                editingVehicle = vehicle
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            .tint(.blue)
                         }
                     }
                 }

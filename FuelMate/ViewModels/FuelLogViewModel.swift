@@ -91,26 +91,10 @@ public final class FuelLogViewModel: ObservableObject {
     // MARK: - Initialization & Bootstrapping
     public func bootstrapData() {
         fetchVehicles()
-        if vehicles.isEmpty {
-            createDefaultVehicleIfNeeded()
-        } else if selectedVehicle == nil {
+        if selectedVehicle == nil {
             selectedVehicle = vehicles.first
         }
         fetchLogs()
-    }
-    
-    private func createDefaultVehicleIfNeeded() {
-        let vehicle = Vehicle(context: context)
-        vehicle.id = UUID()
-        vehicle.name = "Toyota Prius"
-        vehicle.plateNumber = "WP CAB-2045"
-        vehicle.vehicleType = "Car"
-        vehicle.tankCapacity = 45.0
-        vehicle.initialOdometer = 45000.0
-        
-        saveContext()
-        fetchVehicles()
-        selectedVehicle = vehicles.first
     }
     
     // MARK: - Vehicle Management
@@ -176,11 +160,12 @@ public final class FuelLogViewModel: ObservableObject {
     }
     
     public func deleteVehicle(_ vehicle: Vehicle) {
+        let wasSelected = (selectedVehicle?.id == vehicle.id)
         context.delete(vehicle)
         saveContext()
         fetchVehicles()
-        if vehicles.isEmpty {
-            createDefaultVehicleIfNeeded()
+        if wasSelected {
+            selectedVehicle = vehicles.first
         }
         fetchLogs()
     }

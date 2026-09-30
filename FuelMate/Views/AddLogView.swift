@@ -93,6 +93,7 @@ public struct AddLogView: View {
     }
     
     private var isFormValid: Bool {
+        guard viewModel.selectedVehicle != nil else { return false }
         guard let odo = parsedOdometer, odo > 0,
               let vol = parsedVolume, vol > 0,
               let cost = parsedTotalCost, cost > 0,
@@ -126,6 +127,26 @@ public struct AddLogView: View {
     public var body: some View {
         NavigationStack {
             Form {
+                // MARK: - No Vehicle Warning
+                if viewModel.selectedVehicle == nil {
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("No Vehicle Selected")
+                                    .font(.subheadline)
+                                    .bold()
+                                Text("Please register a vehicle before recording a fuel log.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                
                 // MARK: - Prefilled Scanner Notice
                 if isPrefilledFromReceipt {
                     Section {

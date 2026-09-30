@@ -28,7 +28,10 @@ public enum SriLankanEcosystem {
     
     public static let vehicleTypeIcons: [String: String] = [
         "Car": "car.side.fill",
-        "Motorcycle": "bicycle",
+        "Motorcycle": "motorcycle.fill",
+        "Motorbike": "motorcycle.fill",
+        "Motor Bicycle": "motorcycle.fill",
+        "Bicycle": "bicycle",
         "SUV": "suv.side.fill",
         "Van": "box.truck.fill",
         "Three-Wheeler": "car.fill"

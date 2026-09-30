@@ -84,6 +84,13 @@ final class FuelMateTests: XCTestCase {
     @MainActor
     func testOdometerRegressionThrowsError() throws {
         let viewModel = FuelLogViewModel(context: context)
+        viewModel.addVehicle(
+            name: "Toyota Prius",
+            plateNumber: "WP CAB-2045",
+            vehicleType: "Car",
+            tankCapacity: 45.0,
+            initialOdometer: 45000.0
+        )
         
         // First log
         try viewModel.addLog(
@@ -116,6 +123,13 @@ final class FuelMateTests: XCTestCase {
     @MainActor
     func testNegativeOrZeroMetricsThrowError() throws {
         let viewModel = FuelLogViewModel(context: context)
+        viewModel.addVehicle(
+            name: "Toyota Prius",
+            plateNumber: "WP CAB-2045",
+            vehicleType: "Car",
+            tankCapacity: 45.0,
+            initialOdometer: 45000.0
+        )
         
         // Zero odometer
         XCTAssertThrowsError(try viewModel.addLog(
