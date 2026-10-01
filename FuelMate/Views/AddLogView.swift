@@ -51,7 +51,7 @@ public struct AddLogView: View {
         }
     }
     
-    // MARK: - Safe Parsed Doubles
+    // MARK: - Safe Parsed Doubles & Decimals
     private var parsedOdometer: Double? {
         Double(odometer.replacingOccurrences(of: ",", with: "."))
     }
@@ -62,6 +62,45 @@ public struct AddLogView: View {
     
     private var parsedTotalCost: Double? {
         Double(totalCost.replacingOccurrences(of: ",", with: "."))
+    }
+    
+    private var parsedDecimalCost: Decimal? {
+        let clean = totalCost.replacingOccurrences(of: ",", with: ".")
+        return Decimal(string: clean)
+    }
+    
+    private var parsedDecimalVolume: Decimal? {
+        let clean = volume.replacingOccurrences(of: ",", with: ".")
+        return Decimal(string: clean)
+    }
+    
+    private var unitPriceDecimal: Decimal {
+        Decimal(priceManager.getPrice(for: fuelGrade))
+    }
+    
+    // Non-blocking Data Sanity Warnings
+    private var sanityWarnings: [SanityWarning] {
+        guard let vehicle = viewModel.selectedVehicle else { return [] }
+        let vol = parsedVolume ?? 0.0
+        let odo = parsedOdometer ?? 0.0
+        let baseline: Double
+        switch tripType.lowercased() {
+        case "highway":
+            baseline = vehicle.effectiveHighwayConsumption
+        case "city":
+            baseline = vehicle.effectiveCityConsumption
+        default:
+            baseline = (vehicle.effectiveCityConsumption + vehicle.effectiveHighwayConsumption) / 2.0
+        }
+        
+        return FuelStatistics.validateSanity(
+            enteredVolume: vol,
+            tankCapacity: vehicle.tankCapacity,
+            enteredOdometer: odo,
+            previousOdometer: previousOdometer,
+            baselineEconomy: baseline,
+            estimatedEconomy: calculatedTripEfficiency
+        )
     }
     
     // Baseline previous odometer
@@ -337,6 +376,30 @@ public struct AddLogView: View {
                     }
                 }
                 
+                // MARK: - Non-Blocking Data Sanity Advisory Section
+                if !sanityWarnings.isEmpty {
+                    Section(header: Text("Review Warnings (Non-Blocking)")) {
+                        ForEach(sanityWarnings) { warning in
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.subheadline)
+                                    .padding(.top, 2)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(warning.type == .volumeExceedsTank ? "Tank Capacity Exceeded" : (warning.type == .odometerJump ? "Unusual Distance Jump" : "Economy Deviation"))
+                                        .font(.caption)
+                                        .bold()
+                                        .foregroundColor(.orange)
+                                    Text(warning.message)
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 3)
+                        }
+                    }
+                }
+                
                 // MARK: - Section 4: Condition & Date
                 Section(header: Text("Condition & Timestamp")) {
                     Toggle(isOn: $isFullTank) {
@@ -491,33 +554,60 @@ public struct AddLogView: View {
         }
     }
     
-    // MARK: - Smart Auto-Calculation Handlers
+    // MARK: - Smart Auto-Calculation Handlers (Decimal Exactness)
     private func handleVolumeInputChanged(_ newVol: String) {
-        guard let vol = Double(newVol.replacingOccurrences(of: ",", with: ".")), vol > 0 else { return }
-        let rate = currentUnitPrice
+        let clean = newVol.replacingOccurrences(of: ",", with: ".")
+        guard let vol = Decimal(string: clean), vol > 0 else { return }
+        let rate = unitPriceDecimal
         guard rate > 0 else { return }
-        let calculatedCost = vol * rate
-        totalCost = String(format: "%.2f", calculatedCost)
+        
+        var calculatedCost = vol * rate
+        var roundedCost = Decimal()
+        NSDecimalRound(&roundedCost, &calculatedCost, 2, .plain)
+        
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        totalCost = formatter.string(from: NSDecimalNumber(decimal: roundedCost)) ?? "\(roundedCost)"
     }
     
     private func handleTotalCostInputChanged(_ newCost: String) {
-        guard let cost = Double(newCost.replacingOccurrences(of: ",", with: ".")), cost > 0 else { return }
-        let rate = currentUnitPrice
+        let clean = newCost.replacingOccurrences(of: ",", with: ".")
+        guard let cost = Decimal(string: clean), cost > 0 else { return }
+        let rate = unitPriceDecimal
         guard rate > 0 else { return }
-        let calculatedVol = cost / rate
-        volume = String(format: "%.2f", calculatedVol)
+        
+        var calculatedVol = cost / rate
+        var roundedVol = Decimal()
+        NSDecimalRound(&roundedVol, &calculatedVol, 2, .plain)
+        
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        volume = formatter.string(from: NSDecimalNumber(decimal: roundedVol)) ?? "\(roundedVol)"
     }
     
     private func recalculateOnGradeChange(newGrade: String) {
-        let rate = priceManager.getPrice(for: newGrade)
+        let rate = Decimal(priceManager.getPrice(for: newGrade))
         guard rate > 0 else { return }
         
-        if let vol = parsedVolume, vol > 0 {
-            let cost = vol * rate
-            totalCost = String(format: "%.2f", cost)
-        } else if let cost = parsedTotalCost, cost > 0 {
-            let vol = cost / rate
-            volume = String(format: "%.2f", vol)
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        
+        if let vol = parsedDecimalVolume, vol > 0 {
+            var calculatedCost = vol * rate
+            var roundedCost = Decimal()
+            NSDecimalRound(&roundedCost, &calculatedCost, 2, .plain)
+            totalCost = formatter.string(from: NSDecimalNumber(decimal: roundedCost)) ?? "\(roundedCost)"
+        } else if let cost = parsedDecimalCost, cost > 0 {
+            var calculatedVol = cost / rate
+            var roundedVol = Decimal()
+            NSDecimalRound(&roundedVol, &calculatedVol, 2, .plain)
+            volume = formatter.string(from: NSDecimalNumber(decimal: roundedVol)) ?? "\(roundedVol)"
         }
     }
     
@@ -525,7 +615,7 @@ public struct AddLogView: View {
     private func saveLog() {
         guard let odo = parsedOdometer,
               let vol = parsedVolume,
-              let cost = parsedTotalCost else { return }
+              let costDec = parsedDecimalCost ?? (parsedTotalCost.map { Decimal($0) }) else { return }
         
         let finalLat = latitude != 0.0 ? latitude : (locationManager.location?.latitude ?? 0.0)
         let finalLon = longitude != 0.0 ? longitude : (locationManager.location?.longitude ?? 0.0)
@@ -535,7 +625,7 @@ public struct AddLogView: View {
             try viewModel.addLog(
                 odometer: odo,
                 volume: vol,
-                totalCost: cost,
+                totalCost: costDec,
                 stationName: stationName,
                 latitude: finalLat,
                 longitude: finalLon,

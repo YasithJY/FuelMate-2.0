@@ -36,7 +36,7 @@ final class FuelMateTests: XCTestCase {
         log.date = Date()
         log.odometer = 45450.0
         log.volume = 20.0
-        log.totalCost = 6220.0
+        log.totalCost = NSDecimalNumber(value: 6220.0)
         log.stationName = "Ceypetco"
         log.fuelGrade = "Petrol Octane 92"
         log.tripType = "City"
@@ -77,6 +77,177 @@ final class FuelMateTests: XCTestCase {
         manager.updatePrice(for: "Petrol Octane 92", price: 420.0)
         XCTAssertEqual(manager.getPrice(for: "Petrol Octane 92"), 420.0)
         manager.resetToDefaults()
+    }
+
+    // MARK: - Phase 1: Pure FuelStatistics & Full-Tank Logic Tests
+    func testFullTankFuelEconomyWithConsecutiveFills() throws {
+        let date1 = Date().addingTimeInterval(-86400 * 5)
+        let date2 = Date().addingTimeInterval(-86400 * 2)
+        
+        let e1 = FuelEntry(date: date1, odometer: 10000.0, volume: 30.0, totalCost: Decimal(12000), isFullTank: true)
+        let e2 = FuelEntry(date: date2, odometer: 10450.0, volume: 30.0, totalCost: Decimal(12000), isFullTank: true)
+        
+        let stats = FuelStatistics.compute(entries: [e1, e2])
+        
+        // 450 km / 30 L = 15.0 km/L
+        XCTAssertNotNil(stats.averageEconomy)
+        XCTAssertEqual(try XCTUnwrap(stats.averageEconomy), 15.0, accuracy: 0.001)
+        XCTAssertEqual(stats.intervals.count, 1)
+        XCTAssertEqual(stats.intervals.first?.distance, 450.0)
+        XCTAssertEqual(stats.intervals.first?.consumedVolume, 30.0)
+        XCTAssertEqual(stats.intervals.first?.economy, 15.0)
+    }
+
+    func testFullTankFuelEconomyWithInterveningPartialFills() throws {
+        let baseDate = Date()
+        // Entry 1: Full tank at 10,000 km
+        let e1 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 10), odometer: 10000.0, volume: 35.0, totalCost: Decimal(14000), isFullTank: true)
+        // Entry 2: Partial top-up at 10,200 km (10 L)
+        let e2 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 7), odometer: 10200.0, volume: 10.0, totalCost: Decimal(4000), isFullTank: false)
+        // Entry 3: Partial top-up at 10,400 km (15 L)
+        let e3 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 4), odometer: 10400.0, volume: 15.0, totalCost: Decimal(6000), isFullTank: false)
+        // Entry 4: Full tank at 10,650 km (15 L)
+        let e4 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 1), odometer: 10650.0, volume: 15.0, totalCost: Decimal(6000), isFullTank: true)
+        
+        let stats = FuelStatistics.compute(entries: [e1, e2, e3, e4])
+        
+        // Distance between e1 and e4: 10,650 - 10,000 = 650 km
+        // Consumed volume: e2 (10) + e3 (15) + e4 (15) = 40 L
+        // Economy: 650 / 40 = 16.25 km/L
+        XCTAssertEqual(stats.intervals.count, 1)
+        let interval = try XCTUnwrap(stats.intervals.first)
+        XCTAssertEqual(interval.distance, 650.0)
+        XCTAssertEqual(interval.consumedVolume, 40.0)
+        XCTAssertEqual(interval.economy, 16.25, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(stats.averageEconomy), 16.25, accuracy: 0.001)
+    }
+
+    func testFullTankFuelEconomyInsufficientDataWhenFewerThanTwoFullFills() {
+        let baseDate = Date()
+        // Case A: 0 full tanks (all partial)
+        let p1 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 5), odometer: 10000.0, volume: 15.0, totalCost: Decimal(6000), isFullTank: false)
+        let p2 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 2), odometer: 10250.0, volume: 15.0, totalCost: Decimal(6000), isFullTank: false)
+        let stats0 = FuelStatistics.compute(entries: [p1, p2])
+        XCTAssertNil(stats0.averageEconomy)
+        XCTAssertTrue(stats0.intervals.isEmpty)
+        
+        let benchmark0 = FuelStatistics.benchmark(actualEconomy: stats0.averageEconomy, cityTarget: 10.0, highwayTarget: 15.0)
+        XCTAssertEqual(benchmark0.status, .insufficientData)
+        XCTAssertEqual(benchmark0.status.rawValue, "Not enough data")
+        
+        // Case B: Only 1 full tank
+        let f1 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 1), odometer: 10500.0, volume: 30.0, totalCost: Decimal(12000), isFullTank: true)
+        let stats1 = FuelStatistics.compute(entries: [p1, p2, f1])
+        XCTAssertNil(stats1.averageEconomy)
+        XCTAssertTrue(stats1.intervals.isEmpty)
+        
+        let benchmark1 = FuelStatistics.benchmark(actualEconomy: stats1.averageEconomy, cityTarget: 10.0, highwayTarget: 15.0)
+        XCTAssertEqual(benchmark1.status, .insufficientData)
+    }
+
+    func testTrailingPartialFillDoesNotCorruptCompletedInterval() throws {
+        let baseDate = Date()
+        let e1 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 8), odometer: 20000.0, volume: 30.0, totalCost: Decimal(12000), isFullTank: true)
+        let e2 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 4), odometer: 20400.0, volume: 25.0, totalCost: Decimal(10000), isFullTank: true)
+        // Trailing partial fill
+        let e3 = FuelEntry(date: baseDate.addingTimeInterval(-86400 * 1), odometer: 20550.0, volume: 10.0, totalCost: Decimal(4000), isFullTank: false)
+        
+        let stats = FuelStatistics.compute(entries: [e1, e2, e3])
+        
+        // Interval completed between e1 and e2: 400 km / 25 L = 16.0 km/L
+        XCTAssertEqual(stats.intervals.count, 1)
+        XCTAssertEqual(stats.intervals.first?.economy, 16.0)
+        XCTAssertEqual(try XCTUnwrap(stats.averageEconomy), 16.0, accuracy: 0.001)
+    }
+
+    // MARK: - Phase 1: Pure Benchmarking Tests
+    func testBenchmarkingTargets() {
+        let city = 10.0
+        let hwy = 16.0
+        
+        // Above Highway
+        let resAbove = FuelStatistics.benchmark(actualEconomy: 17.5, cityTarget: city, highwayTarget: hwy)
+        XCTAssertEqual(resAbove.status, .aboveHighway)
+        XCTAssertGreaterThan(resAbove.percentageDelta, 0)
+        
+        // On Target (between City and Highway)
+        let resOn = FuelStatistics.benchmark(actualEconomy: 13.0, cityTarget: city, highwayTarget: hwy)
+        XCTAssertEqual(resOn.status, .onTarget)
+        
+        // Below City
+        let resBelow = FuelStatistics.benchmark(actualEconomy: 8.5, cityTarget: city, highwayTarget: hwy)
+        XCTAssertEqual(resBelow.status, .belowCity)
+        XCTAssertLessThan(resBelow.percentageDelta, 0)
+    }
+
+    // MARK: - Phase 1: Decimal Exactness & Money Rounding Tests
+    func testDecimalPrecisionAndCostPerKm() throws {
+        let cost1 = Decimal(string: "6220.50")!
+        let cost2 = Decimal(string: "3779.50")!
+        let totalCost = cost1 + cost2
+        XCTAssertEqual(totalCost, Decimal(10000.00))
+        
+        let e1 = FuelEntry(odometer: 50000.0, volume: 20.0, totalCost: cost1, isFullTank: true)
+        let e2 = FuelEntry(odometer: 50500.0, volume: 15.0, totalCost: cost2, isFullTank: true)
+        
+        let stats = FuelStatistics.compute(entries: [e1, e2])
+        XCTAssertEqual(stats.totalSpent, Decimal(10000.00))
+        XCTAssertEqual(stats.totalDistance, 500.0)
+        
+        // Cost per km: 10,000 / 500 = 20.00
+        XCTAssertEqual(stats.costPerKm, Decimal(20.00))
+        
+        // Average Price: 10,000 / 35 = 285.714...
+        let avgPrice = try XCTUnwrap(stats.averageFuelPrice)
+        let doublePrice = NSDecimalNumber(decimal: avgPrice).doubleValue
+        XCTAssertEqual(doublePrice, 10000.0 / 35.0, accuracy: 0.01)
+    }
+
+    // MARK: - Phase 1: Data Sanity Warnings Tests
+    func testDataSanityWarningsTriggering() {
+        // 1. Tank capacity exceeded
+        let warnings1 = FuelStatistics.validateSanity(
+            enteredVolume: 55.0,
+            tankCapacity: 45.0,
+            enteredOdometer: 10500.0,
+            previousOdometer: 10000.0,
+            baselineEconomy: 15.0,
+            estimatedEconomy: 14.5
+        )
+        XCTAssertTrue(warnings1.contains { $0.type == .volumeExceedsTank })
+        
+        // 2. Odometer jump threshold (> 1500 km)
+        let warnings2 = FuelStatistics.validateSanity(
+            enteredVolume: 40.0,
+            tankCapacity: 45.0,
+            enteredOdometer: 12000.0,
+            previousOdometer: 10000.0, // jump of 2,000 km
+            baselineEconomy: 15.0,
+            estimatedEconomy: 15.0
+        )
+        XCTAssertTrue(warnings2.contains { $0.type == .odometerJump })
+        
+        // 3. Economy > 40% away from baseline
+        let warnings3 = FuelStatistics.validateSanity(
+            enteredVolume: 40.0,
+            tankCapacity: 45.0,
+            enteredOdometer: 10500.0,
+            previousOdometer: 10000.0, // 500 km / 40 L = 12.5 km/L
+            baselineEconomy: 22.0, // (22 - 12.5) / 22 = 43.1% deviation
+            estimatedEconomy: 12.5
+        )
+        XCTAssertTrue(warnings3.contains { $0.type == .economyDeviation })
+        
+        // 4. Normal fill produces no warnings
+        let normalWarnings = FuelStatistics.validateSanity(
+            enteredVolume: 35.0,
+            tankCapacity: 45.0,
+            enteredOdometer: 10500.0,
+            previousOdometer: 10000.0,
+            baselineEconomy: 15.0,
+            estimatedEconomy: 14.28
+        )
+        XCTAssertTrue(normalWarnings.isEmpty)
     }
 
     // MARK: - ViewModel & Multi-Vehicle Management Tests

@@ -126,11 +126,20 @@ public struct AnalyticsView: View {
             }
             
             if filteredEfficiencyPoints.isEmpty {
-                Text("No entries recorded in selected time window.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(height: 200)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                VStack(spacing: 6) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.title3)
+                        .foregroundColor(.secondary.opacity(0.6))
+                    Text("Not enough data")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                    Text("Requires 2+ full-tank fills in selected time window.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                .frame(height: 200)
+                .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 Chart {
                     ForEach(filteredEfficiencyPoints) { point in

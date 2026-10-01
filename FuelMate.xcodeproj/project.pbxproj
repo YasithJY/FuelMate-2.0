@@ -24,6 +24,7 @@
 		FA000002000000000000000F /* StationPickerMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000001000000000000000F /* StationPickerMapView.swift */; };
 		FA0000020000000000000010 /* VehicleManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000010 /* VehicleManagementView.swift */; };
 		FA0000020000000000000011 /* FuelPriceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000011 /* FuelPriceManager.swift */; };
+		FA0000020000000000000012 /* FuelStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000010000000000000012 /* FuelStatistics.swift */; };
 		BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA66F158306D230700A1B0A4 /* FuelMateApp.swift */; };
 		BA66F15F306D230F00A1B0A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F15E306D230F00A1B0A4 /* Assets.xcassets */; };
 		BA66F162306D230F00A1B0A4 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BA66F161306D230F00A1B0A4 /* Preview Assets.xcassets */; };
@@ -67,6 +68,7 @@
 		FA000001000000000000000F /* StationPickerMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/StationPickerMapView.swift"; sourceTree = "<group>"; };
 		FA0000010000000000000010 /* VehicleManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/VehicleManagementView.swift"; sourceTree = "<group>"; };
 		FA0000010000000000000011 /* FuelPriceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/FuelPriceManager.swift"; sourceTree = "<group>"; };
+		FA0000010000000000000012 /* FuelStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Services & Persistence/FuelStatistics.swift"; sourceTree = "<group>"; };
 		BA66F155306D230700A1B0A4 /* FuelMate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FuelMate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA66F158306D230700A1B0A4 /* FuelMateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelMateApp.swift; sourceTree = "<group>"; };
 		BA66F15E306D230F00A1B0A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 				FA000001000000000000000F /* StationPickerMapView.swift */,
 				FA0000010000000000000010 /* VehicleManagementView.swift */,
 				FA0000010000000000000011 /* FuelPriceManager.swift */,
+				FA0000010000000000000012 /* FuelStatistics.swift */,
 				BA66F158306D230700A1B0A4 /* FuelMateApp.swift */,
 				BA66F15E306D230F00A1B0A4 /* Assets.xcassets */,
 				BA66F160306D230F00A1B0A4 /* Preview Content */,
@@ -322,6 +325,7 @@
 				FA000002000000000000000F /* StationPickerMapView.swift in Sources */,
 				FA0000020000000000000010 /* VehicleManagementView.swift in Sources */,
 				FA0000020000000000000011 /* FuelPriceManager.swift in Sources */,
+				FA0000020000000000000012 /* FuelStatistics.swift in Sources */,
 				BA66F159306D230700A1B0A4 /* FuelMateApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

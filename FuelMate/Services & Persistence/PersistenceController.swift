@@ -25,7 +25,7 @@ public struct PersistenceController {
         sampleLog1.date = Calendar.current.date(byAdding: .day, value: -10, to: Date()) ?? Date()
         sampleLog1.odometer = 45350.0
         sampleLog1.volume = 20.0
-        sampleLog1.totalCost = 6220.0
+        sampleLog1.totalCost = NSDecimalNumber(value: 6220.0)
         sampleLog1.stationName = "Ceypetco"
         sampleLog1.fuelGrade = "Petrol Octane 92"
         sampleLog1.tripType = "City"
@@ -41,7 +41,7 @@ public struct PersistenceController {
         sampleLog2.date = Date()
         sampleLog2.odometer = 45720.0
         sampleLog2.volume = 19.5
-        sampleLog2.totalCost = 6064.5
+        sampleLog2.totalCost = NSDecimalNumber(value: 6064.5)
         sampleLog2.stationName = "Lanka IOC"
         sampleLog2.fuelGrade = "Petrol Octane 92"
         sampleLog2.tripType = "Highway"
@@ -147,9 +147,9 @@ public struct PersistenceController {
         
         let logTotalCostAttr = NSAttributeDescription()
         logTotalCostAttr.name = "totalCost"
-        logTotalCostAttr.attributeType = .doubleAttributeType
+        logTotalCostAttr.attributeType = .decimalAttributeType
         logTotalCostAttr.isOptional = false
-        logTotalCostAttr.defaultValue = 0.0
+        logTotalCostAttr.defaultValue = NSDecimalNumber.zero
         
         let logStationNameAttr = NSAttributeDescription()
         logStationNameAttr.name = "stationName"
@@ -331,7 +331,7 @@ public class FuelLog: NSManagedObject, Identifiable {
     @NSManaged public var date: Date
     @NSManaged public var odometer: Double
     @NSManaged public var volume: Double
-    @NSManaged public var totalCost: Double
+    @NSManaged public var totalCost: NSDecimalNumber?
     @NSManaged public var stationName: String?
     @NSManaged public var fuelGrade: String?
     @NSManaged public var tripType: String
@@ -342,13 +342,31 @@ public class FuelLog: NSManagedObject, Identifiable {
     @NSManaged public var locality: String?
     @NSManaged public var vehicle: Vehicle?
     
+    public var costDecimal: Decimal {
+        get { (totalCost as Decimal?) ?? Decimal.zero }
+        set { totalCost = NSDecimalNumber(decimal: newValue) }
+    }
+    
+    public var totalCostDecimal: Decimal {
+        costDecimal
+    }
+    
+    public var totalCostDouble: Double {
+        totalCost?.doubleValue ?? 0.0
+    }
+    
     public var hasValidLocation: Bool {
         return latitude != 0.0 && longitude != 0.0
     }
     
+    public var unitPriceDecimal: Decimal {
+        guard volume > 0 else { return .zero }
+        return costDecimal / Decimal(volume)
+    }
+    
     public var unitPrice: Double {
         guard volume > 0 else { return 0.0 }
-        return totalCost / volume
+        return totalCostDouble / volume
     }
     
     public var fuelType: String? {
@@ -361,5 +379,19 @@ public class FuelLog: NSManagedObject, Identifiable {
     
     public var effectiveTripType: String {
         return tripType.isEmpty ? "City" : tripType
+    }
+    
+    public func toFuelEntry() -> FuelEntry {
+        return FuelEntry(
+            id: id,
+            date: date,
+            odometer: odometer,
+            volume: volume,
+            totalCost: costDecimal,
+            isFullTank: isFullTank,
+            tripType: effectiveTripType,
+            stationName: stationName ?? "",
+            fuelGrade: fuelGrade ?? ""
+        )
     }
 }

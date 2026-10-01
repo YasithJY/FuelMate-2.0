@@ -51,9 +51,13 @@ public struct PricePoint: Identifiable {
 public struct MonthGroup: Identifiable {
     public var id: String { title }
     public let title: String
-    public let totalCost: Double
+    public let totalCost: Decimal
     public let totalVolume: Double
     public let logs: [FuelLog]
+    
+    public var totalCostDouble: Double {
+        NSDecimalNumber(decimal: totalCost).doubleValue
+    }
 }
 
 public enum AnalyticsTimeRange: String, CaseIterable, Identifiable {
@@ -202,7 +206,7 @@ public final class FuelLogViewModel: ObservableObject {
     public func addLog(
         odometer: Double,
         volume: Double,
-        totalCost: Double,
+        totalCost: Decimal,
         stationName: String,
         latitude: Double = 0.0,
         longitude: Double = 0.0,
@@ -224,7 +228,7 @@ public final class FuelLogViewModel: ObservableObject {
         guard !volume.isNaN && !volume.isInfinite && volume > 0 else {
             throw FuelLogValidationError.invalidVolume
         }
-        guard !totalCost.isNaN && !totalCost.isInfinite && totalCost > 0 else {
+        guard totalCost > 0 else {
             throw FuelLogValidationError.invalidTotalCost
         }
         
@@ -239,7 +243,7 @@ public final class FuelLogViewModel: ObservableObject {
         newLog.date = date
         newLog.odometer = odometer
         newLog.volume = volume
-        newLog.totalCost = totalCost
+        newLog.totalCost = NSDecimalNumber(decimal: totalCost)
         newLog.stationName = stationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Fuel Station" : stationName.trimmingCharacters(in: .whitespacesAndNewlines)
         newLog.latitude = latitude
         newLog.longitude = longitude
@@ -253,6 +257,41 @@ public final class FuelLogViewModel: ObservableObject {
         saveContext()
         fetchLogs()
         return newLog
+    }
+    
+    // Convenience overload for Double amounts (source-compatible)
+    @discardableResult
+    public func addLog(
+        odometer: Double,
+        volume: Double,
+        totalCost: Double,
+        stationName: String,
+        latitude: Double = 0.0,
+        longitude: Double = 0.0,
+        locality: String? = nil,
+        fuelGrade: String = "Petrol Octane 92",
+        tripType: String = "City",
+        notes: String = "",
+        isFullTank: Bool = true,
+        date: Date = Date()
+    ) throws -> FuelLog {
+        guard !totalCost.isNaN && !totalCost.isInfinite && totalCost > 0 else {
+            throw FuelLogValidationError.invalidTotalCost
+        }
+        return try addLog(
+            odometer: odometer,
+            volume: volume,
+            totalCost: Decimal(totalCost),
+            stationName: stationName,
+            latitude: latitude,
+            longitude: longitude,
+            locality: locality,
+            fuelGrade: fuelGrade,
+            tripType: tripType,
+            notes: notes,
+            isFullTank: isFullTank,
+            date: date
+        )
     }
     
     public func deleteLog(_ log: FuelLog) {
@@ -326,7 +365,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.date = calendar.date(byAdding: .day, value: -item.daysAgo, to: now) ?? now
             log.odometer = item.odo
             log.volume = item.vol
-            log.totalCost = item.cost
+            log.totalCost = NSDecimalNumber(value: item.cost)
             log.stationName = item.station
             log.locality = item.locality
             log.latitude = item.lat
@@ -361,7 +400,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.date = calendar.date(byAdding: .day, value: -item.daysAgo, to: now) ?? now
             log.odometer = item.odo
             log.volume = item.vol
-            log.totalCost = item.cost
+            log.totalCost = NSDecimalNumber(value: item.cost)
             log.stationName = item.station
             log.locality = item.locality
             log.latitude = item.lat
@@ -395,7 +434,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.date = calendar.date(byAdding: .day, value: -item.daysAgo, to: now) ?? now
             log.odometer = item.odo
             log.volume = item.vol
-            log.totalCost = item.cost
+            log.totalCost = NSDecimalNumber(value: item.cost)
             log.stationName = item.station
             log.locality = item.locality
             log.latitude = item.lat
@@ -422,13 +461,49 @@ public final class FuelLogViewModel: ObservableObject {
         seedSriLankanDemoData()
     }
     
-    // MARK: - Core Calculations (Guarded against Zero & NaN)
+    // MARK: - Decoupled Pure Statistics Engine
+    public var fuelEntries: [FuelEntry] {
+        logs.map { $0.toFuelEntry() }
+    }
+    
+    public var currentFuelStats: FuelStatistics {
+        let initialOdo = selectedVehicle?.initialOdometer ?? 0.0
+        let city = selectedVehicle?.effectiveCityConsumption ?? 10.0
+        let hwy = selectedVehicle?.effectiveHighwayConsumption ?? 15.0
+        return FuelStatistics.compute(
+            entries: fuelEntries,
+            initialOdometer: initialOdo,
+            cityTarget: city,
+            highwayTarget: hwy
+        )
+    }
+    
+    public var hasEnoughFullTankData: Bool {
+        currentFuelStats.averageEconomy != nil
+    }
+    
+    public var currentBenchmark: BenchmarkComparison {
+        let city = selectedVehicle?.effectiveCityConsumption ?? 10.0
+        let hwy = selectedVehicle?.effectiveHighwayConsumption ?? 15.0
+        return FuelStatistics.benchmark(
+            actualEconomy: currentFuelStats.averageEconomy,
+            cityTarget: city,
+            highwayTarget: hwy,
+            tripType: "Mixed"
+        )
+    }
+    
+    // MARK: - Core Calculations (Delegated to Pure Statistics)
     public var latestLog: FuelLog? {
         logs.first
     }
     
+    public var totalSpentDecimal: Decimal {
+        currentFuelStats.totalSpent
+    }
+    
     public var totalSpent: Double {
-        logs.reduce(0.0) { sum, log in sum + max(0.0, log.totalCost) }
+        NSDecimalNumber(decimal: currentFuelStats.totalSpent).doubleValue
     }
     
     public var totalFuelSpent: Double {
@@ -436,57 +511,39 @@ public final class FuelLogViewModel: ObservableObject {
     }
     
     public var totalVolume: Double {
-        logs.reduce(0.0) { sum, log in sum + max(0.0, log.volume) }
+        currentFuelStats.totalVolume
     }
     
     public var totalDistance: Double {
-        guard let currentVehicle = selectedVehicle else { return 0.0 }
-        if logs.count > 1 {
-            let odometers = logs.map { $0.odometer }
-            guard let minOdo = odometers.min(), let maxOdo = odometers.max(), maxOdo > minOdo else {
-                return 0.0
-            }
-            return maxOdo - minOdo
-        } else if let singleLog = logs.first, currentVehicle.initialOdometer > 0 {
-            let diff = singleLog.odometer - currentVehicle.initialOdometer
-            return max(0.0, diff)
-        }
-        return 0.0
+        currentFuelStats.totalDistance
     }
     
     public var totalDistanceTravelled: Double {
         totalDistance
     }
     
+    public var averageFuelPriceDecimal: Decimal? {
+        currentFuelStats.averageFuelPrice
+    }
+    
     public var averageFuelPrice: Double {
-        let vol = totalVolume
-        guard vol > 0 else { return 0.0 }
-        let price = totalSpent / vol
-        return price.isFinite ? price : 0.0
+        currentFuelStats.averageFuelPrice.map { NSDecimalNumber(decimal: $0).doubleValue } ?? 0.0
     }
     
     public var averageEfficiency: Double {
-        guard logs.count > 1 else { return 0.0 }
-        let sorted = logs.sorted { $0.date < $1.date }
-        guard let first = sorted.first, let last = sorted.last else { return 0.0 }
-        
-        let netDistance = last.odometer - first.odometer
-        let consumedVolume = sorted.dropFirst().reduce(0.0) { sum, log in sum + max(0.0, log.volume) }
-        
-        guard consumedVolume > 0 && netDistance > 0 else { return 0.0 }
-        let result = netDistance / consumedVolume
-        return result.isFinite ? result : 0.0
+        currentFuelStats.averageEconomy ?? 0.0
     }
     
     public var averageFuelEfficiency: Double {
         averageEfficiency
     }
     
+    public var costPerKmDecimal: Decimal? {
+        currentFuelStats.costPerKm
+    }
+    
     public var costPerKm: Double {
-        let dist = totalDistance
-        guard dist > 0 else { return 0.0 }
-        let cost = totalSpent / dist
-        return cost.isFinite ? cost : 0.0
+        currentFuelStats.costPerKm.map { NSDecimalNumber(decimal: $0).doubleValue } ?? 0.0
     }
     
     public var costPerDistance: Double {
@@ -499,6 +556,9 @@ public final class FuelLogViewModel: ObservableObject {
     
     // MARK: - Trip-Specific Metrics
     public func tripDistance(for log: FuelLog) -> Double? {
+        if let interval = currentFuelStats.intervals.first(where: { $0.endEntryId == log.id }) {
+            return interval.distance
+        }
         let sorted = logs.sorted { $0.date < $1.date }
         guard let index = sorted.firstIndex(where: { $0.id == log.id }) else { return nil }
         
@@ -513,9 +573,7 @@ public final class FuelLogViewModel: ObservableObject {
     }
     
     public func tripEfficiency(for log: FuelLog) -> Double? {
-        guard let distance = tripDistance(for: log), log.volume > 0 else { return nil }
-        let eff = distance / log.volume
-        return eff.isFinite && eff > 0 ? eff : nil
+        currentFuelStats.intervals.first(where: { $0.endEntryId == log.id })?.economy
     }
     
     // MARK: - History Month Grouping
@@ -537,7 +595,7 @@ public final class FuelLogViewModel: ObservableObject {
         
         return order.compactMap { key in
             guard let items = groups[key] else { return nil }
-            let total = items.reduce(0.0) { $0 + $1.totalCost }
+            let total = items.reduce(Decimal.zero) { $0 + $1.costDecimal }
             let vol = items.reduce(0.0) { $0 + $1.volume }
             return MonthGroup(title: key, totalCost: total, totalVolume: vol, logs: items)
         }
@@ -580,7 +638,7 @@ public final class FuelLogViewModel: ObservableObject {
             let key = formatter.string(from: log.date)
             let existing = grouped[key]?.amount ?? 0.0
             let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: log.date)) ?? log.date
-            grouped[key] = (amount: existing + log.totalCost, date: startOfMonth)
+            grouped[key] = (amount: existing + log.totalCostDouble, date: startOfMonth)
         }
         
         return grouped.map { MonthlySpend(month: $0.key, amount: $0.value.amount, date: $0.value.date) }
@@ -588,33 +646,41 @@ public final class FuelLogViewModel: ObservableObject {
     }
     
     public func efficiencyTrend(for timeRange: AnalyticsTimeRange) -> [EfficiencyPoint] {
-        let targetLogs = logs(for: timeRange).sorted { $0.date < $1.date }
-        guard targetLogs.count > 1 else { return [] }
-        
-        var points: [EfficiencyPoint] = []
-        for i in 1..<targetLogs.count {
-            let prev = targetLogs[i - 1]
-            let curr = targetLogs[i]
-            let dist = curr.odometer - prev.odometer
-            if dist > 0 && curr.volume > 0 {
-                let eff = dist / curr.volume
-                if eff.isFinite && eff > 0 {
-                    points.append(EfficiencyPoint(
-                        id: curr.id,
-                        date: curr.date,
-                        efficiency: eff,
-                        stationName: curr.stationName ?? "Fuel Station"
-                    ))
-                }
-            }
+        let calendar = Calendar.current
+        let now = Date()
+        let cutoff: Date?
+        switch timeRange {
+        case .month:
+            cutoff = calendar.date(byAdding: .day, value: -30, to: now)
+        case .sixMonths:
+            cutoff = calendar.date(byAdding: .month, value: -6, to: now)
+        case .year:
+            cutoff = calendar.date(byAdding: .year, value: -1, to: now)
+        case .all:
+            cutoff = nil
         }
-        return points
+        
+        let filteredIntervals = currentFuelStats.intervals.filter { interval in
+            if let cutoff = cutoff {
+                return interval.endDate >= cutoff
+            }
+            return true
+        }
+        
+        return filteredIntervals.map { interval in
+            EfficiencyPoint(
+                id: interval.endEntryId,
+                date: interval.endDate,
+                efficiency: interval.economy,
+                stationName: interval.stationName.isEmpty ? "Fuel Station" : interval.stationName
+            )
+        }
     }
     
     public func priceTrend(for timeRange: AnalyticsTimeRange) -> [PricePoint] {
         return logs(for: timeRange).sorted { $0.date < $1.date }.compactMap { log in
             guard log.volume > 0 else { return nil }
-            let price = log.totalCost / log.volume
+            let price = log.totalCostDouble / log.volume
             guard price.isFinite && price > 0 else { return nil }
             return PricePoint(
                 id: log.id,
@@ -638,10 +704,10 @@ public final class FuelLogViewModel: ObservableObject {
     }
     
     public var bestTripEfficiency: Double? {
-        efficiencyTrend.map { $0.efficiency }.max()
+        currentFuelStats.bestEconomy
     }
     
     public var worstTripEfficiency: Double? {
-        efficiencyTrend.map { $0.efficiency }.min()
+        currentFuelStats.worstEconomy
     }
 }

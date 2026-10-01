@@ -79,13 +79,22 @@ public final class UnitSettings: ObservableObject {
     // MARK: - Safe Formatting Utilities
     public func formatCurrency(_ amount: Double) -> String {
         guard !amount.isNaN && !amount.isInfinite else { return "\(currencySymbol) 0.00" }
-        let safeAmount = max(0.0, amount)
+        return formatCurrency(Decimal(amount))
+    }
+    
+    public func formatCurrency(_ amount: Decimal) -> String {
+        let safeAmount = max(.zero, amount)
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 2
         formatter.maximumFractionDigits = 2
-        let formattedNumber = formatter.string(from: NSNumber(value: safeAmount)) ?? String(format: "%.2f", safeAmount)
+        let formattedNumber = formatter.string(from: NSDecimalNumber(decimal: safeAmount)) ?? "\(safeAmount)"
         return "\(currencySymbol) \(formattedNumber)"
+    }
+    
+    public func formatCurrency(_ amount: NSDecimalNumber?) -> String {
+        guard let num = amount else { return "\(currencySymbol) 0.00" }
+        return formatCurrency(num as Decimal)
     }
     
     public func formatDistance(_ distance: Double) -> String {
@@ -124,11 +133,18 @@ public final class UnitSettings: ObservableObject {
         guard !price.isNaN && !price.isInfinite && price > 0 else {
             return "\(currencySymbol) 0.00/\(unitSystem.volumeUnit)"
         }
+        return formatUnitPrice(Decimal(price))
+    }
+    
+    public func formatUnitPrice(_ price: Decimal) -> String {
+        guard price > 0 else {
+            return "\(currencySymbol) 0.00/\(unitSystem.volumeUnit)"
+        }
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 2
         formatter.maximumFractionDigits = 2
-        let formatted = formatter.string(from: NSNumber(value: price)) ?? String(format: "%.2f", price)
+        let formatted = formatter.string(from: NSDecimalNumber(decimal: price)) ?? "\(price)"
         return "\(currencySymbol) \(formatted)/\(unitSystem.volumeUnit)"
     }
     
@@ -137,6 +153,13 @@ public final class UnitSettings: ObservableObject {
         var csv = "Vehicle,ID,Date,Station,Locality,Odometer (\(unitSystem.distanceUnit)),Volume (\(unitSystem.volumeUnit)),Total Cost (\(currencySymbol)),Unit Price,Fuel Grade,Full Tank,Latitude,Longitude,Notes\r\n"
         
         let isoFormatter = ISO8601DateFormatter()
+        let posixNumberFormatter = NumberFormatter()
+        posixNumberFormatter.locale = Locale(identifier: "en_US_POSIX")
+        posixNumberFormatter.numberStyle = .decimal
+        posixNumberFormatter.usesGroupingSeparator = false
+        posixNumberFormatter.minimumFractionDigits = 2
+        posixNumberFormatter.maximumFractionDigits = 2
+        
         let sortedLogs = logs.sorted { $0.date > $1.date }
         
         for log in sortedLogs {
@@ -147,8 +170,8 @@ public final class UnitSettings: ObservableObject {
             let locality = escapeCSVField(log.locality ?? "")
             let odometer = String(format: "%.1f", max(0.0, log.odometer))
             let volume = String(format: "%.2f", max(0.0, log.volume))
-            let totalCost = String(format: "%.2f", max(0.0, log.totalCost))
-            let unitPrice = String(format: "%.2f", log.unitPrice)
+            let totalCost = posixNumberFormatter.string(from: NSDecimalNumber(decimal: max(.zero, log.costDecimal))) ?? String(format: "%.2f", max(0.0, log.totalCostDouble))
+            let unitPrice = posixNumberFormatter.string(from: NSDecimalNumber(decimal: max(.zero, log.unitPriceDecimal))) ?? String(format: "%.2f", log.unitPrice)
             let grade = escapeCSVField(log.fuelGrade ?? "Petrol 92 Octane")
             let fullTank = log.isFullTank ? "YES" : "NO"
             let lat = String(format: "%.6f", log.latitude)

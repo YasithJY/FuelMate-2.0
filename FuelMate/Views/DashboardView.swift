@@ -221,9 +221,9 @@ public struct DashboardView: View {
                     .background(AppTheme.primaryGradient)
                     .foregroundColor(.white)
                     .clipShape(Capsule())
-                } else if viewModel.logs.count >= 2 && viewModel.averageEfficiency > 0 {
+                } else if viewModel.hasEnoughFullTankData, let avg = viewModel.currentFuelStats.averageEconomy {
                     let cityTarget = viewModel.selectedVehicle?.effectiveCityConsumption ?? 10.0
-                    let ratio = viewModel.averageEfficiency / max(cityTarget, 1.0)
+                    let ratio = avg / max(cityTarget, 1.0)
                     HStack(spacing: 4) {
                         Image(systemName: ratio >= 1.0 ? "arrow.up.right" : "arrow.down.right")
                         Text("\(Int(ratio * 100))%")
@@ -295,10 +295,11 @@ public struct DashboardView: View {
     
     // MARK: - Animated Circular Gauge with Dual City/Highway Benchmarking
     private var efficiencyGaugeCard: some View {
-        let hasEnoughLogs = viewModel.logs.count >= 2
-        let actualEfficiency = hasEnoughLogs ? viewModel.averageEfficiency : 0.0
+        let hasEnoughData = viewModel.hasEnoughFullTankData
+        let actualEfficiency = viewModel.currentFuelStats.averageEconomy ?? 0.0
         let cityTarget = viewModel.selectedVehicle?.effectiveCityConsumption ?? 10.0
         let highwayTarget = viewModel.selectedVehicle?.effectiveHighwayConsumption ?? 15.0
+        let benchmark = viewModel.currentBenchmark
         
         // Dynamic upper scale to give generous head-room
         let maxScale = max(highwayTarget * 1.35, actualEfficiency * 1.15, 25.0)
@@ -312,7 +313,7 @@ public struct DashboardView: View {
         let markerRadius: CGFloat = (ringDiameter / 2.0)
         
         // Ratios (0.0 to 1.0)
-        let actualRatio = hasEnoughLogs && actualEfficiency > 0 ? min(actualEfficiency / maxScale, 1.0) : 0.0
+        let actualRatio = hasEnoughData && actualEfficiency > 0 ? min(actualEfficiency / maxScale, 1.0) : 0.0
         let cityRatio = min(max(cityTarget / maxScale, 0.0), 1.0)
         let highwayRatio = min(max(highwayTarget / maxScale, 0.0), 1.0)
         
@@ -349,7 +350,7 @@ public struct DashboardView: View {
                     .shadow(color: Color.green.opacity(0.4), radius: 3)
                 
                 // 4. Dynamic Animated Actual Efficiency Arc
-                if hasEnoughLogs && actualEfficiency > 0 {
+                if hasEnoughData && actualEfficiency > 0 {
                     Circle()
                         .trim(from: 0.0, to: animateRing ? CGFloat(actualRatio * sweepAngle / 360.0) : 0.0)
                         .stroke(
@@ -363,7 +364,7 @@ public struct DashboardView: View {
                 
                 // 5. Center Status Display
                 VStack(spacing: 3) {
-                    if hasEnoughLogs {
+                    if hasEnoughData {
                         Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                             .font(.subheadline)
                             .foregroundStyle(actualEfficiency >= highwayTarget ? AppTheme.emeraldGradient : AppTheme.primaryGradient)
@@ -379,8 +380,8 @@ public struct DashboardView: View {
                             .foregroundColor(.secondary)
                         
                         // Performance Tag vs Baselines
-                        if actualEfficiency >= highwayTarget {
-                            Text("Exceeding Highway")
+                        if benchmark.status == .aboveHighway {
+                            Text("Above Highway Target")
                                 .font(.system(size: 10, weight: .bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -388,8 +389,8 @@ public struct DashboardView: View {
                                 .foregroundColor(.green)
                                 .clipShape(Capsule())
                                 .padding(.top, 2)
-                        } else if actualEfficiency >= cityTarget {
-                            Text("Within Target Range")
+                        } else if benchmark.status == .onTarget {
+                            Text("On Target")
                                 .font(.system(size: 10, weight: .bold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -408,17 +409,17 @@ public struct DashboardView: View {
                                 .padding(.top, 2)
                         }
                     } else {
-                        // Graceful "No logs yet" State to Prevent Division by Zero
+                        // Graceful "Not enough data" State until 2 full tanks exist
                         Image(systemName: "fuelpump.circle")
                             .font(.system(size: 32))
                             .foregroundColor(.secondary)
                             .padding(.bottom, 2)
                         
-                        Text("No logs yet")
+                        Text("Not enough data")
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Text("Record 2+ fill-ups")
+                        Text("Record 2+ full-tank fills")
                             .font(.caption2)
                             .foregroundColor(.secondary.opacity(0.8))
                     }
@@ -515,38 +516,55 @@ public struct DashboardView: View {
                 }
             }
             
-            Chart(viewModel.efficiencyTrend) { point in
-                LineMark(
-                    x: .value("Date", point.date),
-                    y: .value("Efficiency", point.efficiency)
-                )
-                .interpolationMethod(.catmullRom)
-                .foregroundStyle(AppTheme.primaryGradient)
-                .lineStyle(StrokeStyle(lineWidth: 3))
-                
-                AreaMark(
-                    x: .value("Date", point.date),
-                    y: .value("Efficiency", point.efficiency)
-                )
-                .interpolationMethod(.catmullRom)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.3), Color.clear],
-                        startPoint: .top,
-                        endPoint: .bottom
+            if viewModel.efficiencyTrend.isEmpty {
+                VStack(spacing: 6) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.title2)
+                        .foregroundColor(.secondary.opacity(0.6))
+                    Text("Not enough data")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                    Text("Requires 2+ full-tank fills to generate trajectory")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.8))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 135)
+            } else {
+                Chart(viewModel.efficiencyTrend) { point in
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value("Efficiency", point.efficiency)
                     )
-                )
-                
-                PointMark(
-                    x: .value("Date", point.date),
-                    y: .value("Efficiency", point.efficiency)
-                )
-                .foregroundStyle(Color(red: 0.0, green: 0.72, blue: 0.83))
-                .symbolSize(26)
-            }
-            .frame(height: 135)
-            .chartYAxis {
-                AxisMarks(position: .leading)
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(AppTheme.primaryGradient)
+                    .lineStyle(StrokeStyle(lineWidth: 3))
+                    
+                    AreaMark(
+                        x: .value("Date", point.date),
+                        y: .value("Efficiency", point.efficiency)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.3), Color.clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    
+                    PointMark(
+                        x: .value("Date", point.date),
+                        y: .value("Efficiency", point.efficiency)
+                    )
+                    .foregroundStyle(Color(red: 0.0, green: 0.72, blue: 0.83))
+                    .symbolSize(26)
+                }
+                .frame(height: 135)
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
             }
         }
         .modernCard()

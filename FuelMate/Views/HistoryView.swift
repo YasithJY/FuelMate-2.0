@@ -65,7 +65,7 @@ public struct HistoryView: View {
         case .oldest:
             result.sort { $0.date < $1.date }
         case .highestCost:
-            result.sort { $0.totalCost > $1.totalCost }
+            result.sort { $0.costDecimal > $1.costDecimal }
         case .highestEfficiency:
             result.sort { (viewModel.tripEfficiency(for: $0) ?? 0) > (viewModel.tripEfficiency(for: $1) ?? 0) }
         }
@@ -102,7 +102,7 @@ public struct HistoryView: View {
                                         Text("\(filteredAndSortedLogs.count) Entries • \(viewModel.selectedVehicle?.name ?? "")")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        Text(settings.formatCurrency(filteredAndSortedLogs.reduce(0.0) { $0 + $1.totalCost }))
+                                        Text(settings.formatCurrency(filteredAndSortedLogs.reduce(Decimal.zero) { $0 + $1.costDecimal }))
                                             .font(.title3)
                                             .bold()
                                     }
