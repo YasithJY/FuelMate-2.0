@@ -3,11 +3,12 @@ import SwiftUI
 // MARK: - Sri Lankan Automotive Ecosystem Constants
 public enum SriLankanEcosystem {
     public static let fuelGrades = [
-        "Petrol 92 Octane",
-        "Petrol 95 Octane",
-        "Auto Diesel",
-        "Super Diesel (Euro 4)",
-        "Kerosene"
+        "Petrol Octane 92",
+        "Petrol Octane 95 (Premium)",
+        "Petrol Octane 95 (Euro 4)",
+        "Petrol XtraPremium Euro 3",
+        "Lanka Auto Diesel",
+        "Lanka Super Diesel 4 Star (Euro 4)"
     ]
     
     public static let stationBrands = [
@@ -36,6 +37,31 @@ public enum SriLankanEcosystem {
         "Van": "box.truck.fill",
         "Three-Wheeler": "car.fill"
     ]
+}
+
+// MARK: - Trip Condition Enumeration
+public enum TripCondition: String, CaseIterable, Identifiable {
+    case city = "City"
+    case highway = "Highway"
+    case mixed = "Mixed"
+    
+    public var id: String { rawValue }
+    
+    public var iconName: String {
+        switch self {
+        case .city: return "building.2.crop.circle"
+        case .highway: return "road.lanes"
+        case .mixed: return "arrow.triangle.swap"
+        }
+    }
+    
+    public var badgeColor: Color {
+        switch self {
+        case .city: return .orange
+        case .highway: return .green
+        case .mixed: return .blue
+        }
+    }
 }
 
 // MARK: - Dynamic Automotive Design System (Light & Dark Mode)

@@ -125,7 +125,9 @@ public final class FuelLogViewModel: ObservableObject {
         plateNumber: String? = nil,
         vehicleType: String = "Car",
         tankCapacity: Double = 45.0,
-        initialOdometer: Double = 0.0
+        initialOdometer: Double = 0.0,
+        cityFuelConsumption: Double = 10.0,
+        highwayFuelConsumption: Double = 15.0
     ) -> Vehicle {
         let vehicle = Vehicle(context: context)
         vehicle.id = UUID()
@@ -134,6 +136,8 @@ public final class FuelLogViewModel: ObservableObject {
         vehicle.vehicleType = vehicleType
         vehicle.tankCapacity = max(1.0, tankCapacity)
         vehicle.initialOdometer = max(0.0, initialOdometer)
+        vehicle.cityFuelConsumption = max(0.1, cityFuelConsumption)
+        vehicle.highwayFuelConsumption = max(0.1, highwayFuelConsumption)
         
         saveContext()
         fetchVehicles()
@@ -148,13 +152,17 @@ public final class FuelLogViewModel: ObservableObject {
         plateNumber: String?,
         vehicleType: String,
         tankCapacity: Double,
-        initialOdometer: Double
+        initialOdometer: Double,
+        cityFuelConsumption: Double = 10.0,
+        highwayFuelConsumption: Double = 15.0
     ) {
         vehicle.name = name
         vehicle.plateNumber = plateNumber
         vehicle.vehicleType = vehicleType
         vehicle.tankCapacity = max(1.0, tankCapacity)
         vehicle.initialOdometer = max(0.0, initialOdometer)
+        vehicle.cityFuelConsumption = max(0.1, cityFuelConsumption)
+        vehicle.highwayFuelConsumption = max(0.1, highwayFuelConsumption)
         saveContext()
         fetchVehicles()
     }
@@ -199,7 +207,8 @@ public final class FuelLogViewModel: ObservableObject {
         latitude: Double = 0.0,
         longitude: Double = 0.0,
         locality: String? = nil,
-        fuelGrade: String = "Petrol 92 Octane",
+        fuelGrade: String = "Petrol Octane 92",
+        tripType: String = "City",
         notes: String = "",
         isFullTank: Bool = true,
         date: Date = Date()
@@ -236,6 +245,7 @@ public final class FuelLogViewModel: ObservableObject {
         newLog.longitude = longitude
         newLog.locality = locality?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? locality : nil
         newLog.fuelGrade = fuelGrade
+        newLog.tripType = tripType.isEmpty ? "City" : tripType
         newLog.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines)
         newLog.isFullTank = isFullTank
         newLog.vehicle = currentVehicle
@@ -298,14 +308,16 @@ public final class FuelLogViewModel: ObservableObject {
         prius.vehicleType = "Car"
         prius.tankCapacity = 45.0
         prius.initialOdometer = 44500.0
+        prius.cityFuelConsumption = 18.0
+        prius.highwayFuelConsumption = 22.0
         
-        let priusLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, notes: String)] = [
-            (65, 44820.0, 18.5, 5753.50, "Ceypetco", "Colombo 07", 6.9014, 79.8631, "Petrol 92 Octane", "City driving refill"),
-            (50, 45180.0, 19.0, 5909.00, "Lanka IOC", "Kandy", 7.2906, 80.6337, "Petrol 92 Octane", "Kandy weekend trip via Expressway"),
-            (35, 45540.0, 18.2, 5660.20, "Sinopec", "Colombo 03", 6.9110, 79.8510, "Petrol 92 Octane", "Regular commute fill"),
-            (20, 45910.0, 18.8, 5846.80, "Shell / RM Parks", "Peliyagoda", 6.9650, 79.8850, "Petrol 95 Octane", "Premium run on highway"),
-            (8,  46280.0, 18.6, 5784.60, "Ceypetco", "Welipenna Rest Area", 6.4421, 80.0542, "Petrol 92 Octane", "Southern Expressway run"),
-            (1,  46650.0, 18.4, 5722.40, "Lanka IOC", "Galle Fort", 6.0329, 80.2168, "Petrol 92 Octane", "Full tank before returning")
+        let priusLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String)] = [
+            (65, 44820.0, 18.5, 5753.50, "Ceypetco", "Colombo 07", 6.9014, 79.8631, "Petrol Octane 92", "City", "City driving refill"),
+            (50, 45180.0, 19.0, 5909.00, "Lanka IOC", "Kandy", 7.2906, 80.6337, "Petrol Octane 92", "Highway", "Kandy weekend trip via Expressway"),
+            (35, 45540.0, 18.2, 5660.20, "Sinopec", "Colombo 03", 6.9110, 79.8510, "Petrol Octane 92", "Mixed", "Regular commute fill"),
+            (20, 45910.0, 18.8, 5846.80, "Shell / RM Parks", "Peliyagoda", 6.9650, 79.8850, "Petrol Octane 95 (Premium)", "Highway", "Premium run on highway"),
+            (8,  46280.0, 18.6, 5784.60, "Ceypetco", "Welipenna Rest Area", 6.4421, 80.0542, "Petrol Octane 92", "Highway", "Southern Expressway run"),
+            (1,  46650.0, 18.4, 5722.40, "Lanka IOC", "Galle Fort", 6.0329, 80.2168, "Petrol Octane 92", "Mixed", "Full tank before returning")
         ]
         
         for item in priusLogs {
@@ -320,6 +332,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.latitude = item.lat
             log.longitude = item.lon
             log.fuelGrade = item.fuel
+            log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
             log.vehicle = prius
@@ -333,11 +346,13 @@ public final class FuelLogViewModel: ObservableObject {
         wagonR.vehicleType = "Car"
         wagonR.tankCapacity = 32.0
         wagonR.initialOdometer = 28000.0
+        wagonR.cityFuelConsumption = 14.0
+        wagonR.highwayFuelConsumption = 18.0
         
-        let wagonRLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, notes: String)] = [
-            (40, 28310.0, 15.0, 4665.00, "Ceypetco", "Nugegoda", 6.8722, 79.8978, "Petrol 92 Octane", "Weekly office commuting"),
-            (22, 28625.0, 14.8, 4602.80, "Lanka IOC", "Maharagama", 6.8480, 79.9268, "Petrol 92 Octane", "Refill after shopping run"),
-            (5,  28940.0, 14.5, 4509.50, "Sinopec", "Rajagiriya", 6.9080, 79.8980, "Petrol 92 Octane", "Economical city cruise")
+        let wagonRLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String)] = [
+            (40, 28310.0, 15.0, 4665.00, "Ceypetco", "Nugegoda", 6.8722, 79.8978, "Petrol Octane 92", "City", "Weekly office commuting"),
+            (22, 28625.0, 14.8, 4602.80, "Lanka IOC", "Maharagama", 6.8480, 79.9268, "Petrol Octane 92", "City", "Refill after shopping run"),
+            (5,  28940.0, 14.5, 4509.50, "Sinopec", "Rajagiriya", 6.9080, 79.8980, "Petrol Octane 92", "Mixed", "Economical city cruise")
         ]
         
         for item in wagonRLogs {
@@ -352,6 +367,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.latitude = item.lat
             log.longitude = item.lon
             log.fuelGrade = item.fuel
+            log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
             log.vehicle = wagonR
@@ -365,10 +381,12 @@ public final class FuelLogViewModel: ObservableObject {
         pulsar.vehicleType = "Motorcycle"
         pulsar.tankCapacity = 15.0
         pulsar.initialOdometer = 12000.0
+        pulsar.cityFuelConsumption = 38.0
+        pulsar.highwayFuelConsumption = 48.0
         
-        let pulsarLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, notes: String)] = [
-            (30, 12380.0, 8.5, 2643.50, "Ceypetco", "Matara", 5.9549, 80.5550, "Petrol 92 Octane", "Coastal ride"),
-            (12, 12760.0, 8.2, 2550.20, "Lanka IOC", "Tangalle", 6.0242, 80.7942, "Petrol 92 Octane", "Weekend beach ride")
+        let pulsarLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String)] = [
+            (30, 12380.0, 8.5, 2643.50, "Ceypetco", "Matara", 5.9549, 80.5550, "Petrol Octane 92", "City", "Coastal ride"),
+            (12, 12760.0, 8.2, 2550.20, "Lanka IOC", "Tangalle", 6.0242, 80.7942, "Petrol Octane 92", "Highway", "Weekend beach ride")
         ]
         
         for item in pulsarLogs {
@@ -383,6 +401,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.latitude = item.lat
             log.longitude = item.lon
             log.fuelGrade = item.fuel
+            log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
             log.vehicle = pulsar

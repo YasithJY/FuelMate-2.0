@@ -34,8 +34,8 @@ public struct StationPickerMapView: View {
             let center = CLLocationCoordinate2D(latitude: latitude.wrappedValue, longitude: longitude.wrappedValue)
             _cameraPosition = State(initialValue: .region(MKCoordinateRegion(
                 center: center,
-                latitudinalMeters: 10_000,
-                longitudinalMeters: 10_000
+                latitudinalMeters: 8_000,
+                longitudinalMeters: 8_000
             )))
         } else {
             let colombo = CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612)
@@ -50,7 +50,7 @@ public struct StationPickerMapView: View {
     public var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                // Interactive Map
+                // Interactive Apple Map
                 Map(position: $cameraPosition, selection: $selectedStation) {
                     // Searched Station Markers
                     ForEach(searchService.searchResults) { station in
@@ -61,7 +61,7 @@ public struct StationPickerMapView: View {
                     
                     // User Dropped Custom Pin (if tapped outside pre-existing stations)
                     if let customCoord = droppedPinCoordinate {
-                        Marker("Custom Location", coordinate: customCoord)
+                        Marker("Selected Location", coordinate: customCoord)
                             .tint(.purple)
                     }
                 }
@@ -73,10 +73,11 @@ public struct StationPickerMapView: View {
                 
                 // Top Search Overlay
                 VStack(spacing: 8) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
-                        TextField("Search petrol shed, Ceypetco, LIOC...", text: $searchText)
+                        
+                        TextField("Search 'Ceypetco', 'petrol shed', 'LIOC'...", text: $searchText)
                             .onSubmit {
                                 performSearch()
                             }
@@ -94,24 +95,51 @@ public struct StationPickerMapView: View {
                         .bold()
                         .foregroundColor(.blue)
                     }
-                    .padding(10)
+                    .padding(12)
                     .background(Color(uiColor: .secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
                     .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     
+                    // Quick Filter Pills
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(["Ceypetco", "Lanka IOC", "Sinopec", "Shell", "petrol shed"], id: \.self) { term in
+                                Button(action: {
+                                    Haptics.selection()
+                                    searchText = term
+                                    performSearch()
+                                }) {
+                                    Text(term)
+                                        .font(.caption)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(uiColor: .secondarySystemGroupedBackground))
+                                        .clipShape(Capsule())
+                                        .shadow(color: Color.black.opacity(0.05), radius: 2)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    
                     Spacer()
                 }
                 
-                // Bottom Selection Confirmation Card
+                // Bottom Pin Selection Confirmation Card
                 if let station = selectedStation {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         HStack(alignment: .top, spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(AppTheme.stationColor(for: station.title).opacity(0.15))
-                                    .frame(width: 44, height: 44)
+                                    .fill(AppTheme.stationColor(for: station.title).opacity(0.16))
+                                    .frame(width: 48, height: 48)
                                 Image(systemName: "fuelpump.fill")
                                     .foregroundColor(AppTheme.stationColor(for: station.title))
                                     .font(.title3)
@@ -129,7 +157,7 @@ public struct StationPickerMapView: View {
                                         .lineLimit(2)
                                 }
                                 
-                                Text(String(format: "GPS: %.4f, %.4f", station.coordinate.latitude, station.coordinate.longitude))
+                                Text(String(format: "Coordinates: %.4f, %.4f", station.coordinate.latitude, station.coordinate.longitude))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -140,13 +168,16 @@ public struct StationPickerMapView: View {
                         Button(action: {
                             confirmSelection(station: station)
                         }) {
-                            Text("Select This Station")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(AppTheme.primaryGradient)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                Text("Populate Station Details")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(AppTheme.primaryGradient)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                     }
                     .padding(16)
@@ -179,7 +210,7 @@ public struct StationPickerMapView: View {
     
     private func performSearch() {
         hideKeyboard()
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "petrol station" : searchText
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "petrol shed" : searchText
         Task {
             _ = await searchService.searchStations(query: query)
         }

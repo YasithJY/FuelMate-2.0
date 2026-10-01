@@ -154,16 +154,41 @@ private struct VehicleRowView: View {
                             Text(plate)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                            Text("•")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                         
-                        Text("•")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("\(vehicle.fuelLogs.count) fill-ups")
+                        Text("\(vehicle.fuelLogs.count) logs")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    
+                    // Dual Baselines Display
+                    HStack(spacing: 8) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "building.2.crop.circle")
+                                .font(.caption2)
+                                .foregroundColor(.orange)
+                            Text("City: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Text("•")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "road.lanes")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                            Text("Hwy: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.top, 2)
                 }
                 
                 Spacer()
@@ -174,10 +199,10 @@ private struct VehicleRowView: View {
                         .font(.title3)
                 } else {
                     Button(action: onEdit) {
-                        Image(systemName: "ellipsis")
-                            .font(.subheadline)
+                        Image(systemName: "pencil.circle")
+                            .font(.title3)
                             .foregroundColor(.secondary)
-                            .padding(8)
+                            .padding(4)
                     }
                     .buttonStyle(.plain)
                 }
@@ -199,6 +224,8 @@ public struct VehicleEditorSheet: View {
     @State private var vehicleType: String = "Car"
     @State private var tankCapacity: String = "45"
     @State private var initialOdometer: String = "0"
+    @State private var cityFuelConsumption: String = "10.0"
+    @State private var highwayFuelConsumption: String = "15.0"
     
     public init(viewModel: FuelLogViewModel, vehicleToEdit: Vehicle? = nil) {
         self.viewModel = viewModel
@@ -210,11 +237,36 @@ public struct VehicleEditorSheet: View {
             _vehicleType = State(initialValue: v.vehicleType)
             _tankCapacity = State(initialValue: String(format: "%.0f", v.tankCapacity))
             _initialOdometer = State(initialValue: String(format: "%.0f", v.initialOdometer))
+            _cityFuelConsumption = State(initialValue: String(format: "%.1f", v.effectiveCityConsumption))
+            _highwayFuelConsumption = State(initialValue: String(format: "%.1f", v.effectiveHighwayConsumption))
+        } else {
+            _cityFuelConsumption = State(initialValue: "10.0")
+            _highwayFuelConsumption = State(initialValue: "15.0")
         }
     }
     
+    private var parsedCityFuel: Double? {
+        Double(cityFuelConsumption.replacingOccurrences(of: ",", with: "."))
+    }
+    
+    private var parsedHighwayFuel: Double? {
+        Double(highwayFuelConsumption.replacingOccurrences(of: ",", with: "."))
+    }
+    
+    private var isCityFuelValid: Bool {
+        guard let val = parsedCityFuel else { return false }
+        return val > 0 && !val.isNaN && !val.isInfinite
+    }
+    
+    private var isHighwayFuelValid: Bool {
+        guard let val = parsedHighwayFuel else { return false }
+        return val > 0 && !val.isNaN && !val.isInfinite
+    }
+    
     private var isFormValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        isCityFuelValid &&
+        isHighwayFuelValid
     }
     
     public var body: some View {
@@ -236,6 +288,47 @@ public struct VehicleEditorSheet: View {
                 }
                 
                 Section(
+                    header: Text("Target Consumption Baselines"),
+                    footer: Text("Set your vehicle's expected fuel consumption. Both baselines must be strictly greater than 0 km/L.")
+                ) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Label("Target City Fuel Consumption (km/L)", systemImage: "building.2.crop.circle")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            TextField("10.0", text: $cityFuelConsumption)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                        }
+                        
+                        if !cityFuelConsumption.isEmpty && !isCityFuelValid {
+                            Text("Target City Fuel Consumption must be strictly greater than 0.")
+                                .font(.caption)
+                                .foregroundColor(AppTheme.errorColor)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Label("Target Highway Fuel Consumption (km/L)", systemImage: "road.lanes")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            TextField("15.0", text: $highwayFuelConsumption)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                        }
+                        
+                        if !highwayFuelConsumption.isEmpty && !isHighwayFuelValid {
+                            Text("Target Highway Fuel Consumption must be strictly greater than 0.")
+                                .font(.caption)
+                                .foregroundColor(AppTheme.errorColor)
+                        }
+                    }
+                }
+                
+                Section(
                     header: Text("Capacity & Mileage"),
                     footer: Text("Initial odometer establishes the baseline distance for trip economy calculations.")
                 ) {
@@ -245,6 +338,7 @@ public struct VehicleEditorSheet: View {
                         TextField("45", text: $tankCapacity)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
                     }
                     
                     HStack {
@@ -253,9 +347,11 @@ public struct VehicleEditorSheet: View {
                         TextField("0", text: $initialOdometer)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(vehicleToEdit == nil ? "Add Vehicle" : "Edit Vehicle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -272,13 +368,25 @@ public struct VehicleEditorSheet: View {
                     .bold()
                     .disabled(!isFormValid)
                 }
+                
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        hideKeyboard()
+                    }
+                    .bold()
+                }
             }
         }
     }
     
     private func saveVehicle() {
+        guard isFormValid else { return }
+        
         let capacity = Double(tankCapacity.replacingOccurrences(of: ",", with: ".")) ?? 45.0
         let odo = Double(initialOdometer.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+        let city = parsedCityFuel ?? 10.0
+        let highway = parsedHighwayFuel ?? 15.0
         
         if let existing = vehicleToEdit {
             viewModel.updateVehicle(
@@ -287,7 +395,9 @@ public struct VehicleEditorSheet: View {
                 plateNumber: plateNumber.isEmpty ? nil : plateNumber,
                 vehicleType: vehicleType,
                 tankCapacity: capacity,
-                initialOdometer: odo
+                initialOdometer: odo,
+                cityFuelConsumption: city,
+                highwayFuelConsumption: highway
             )
         } else {
             viewModel.addVehicle(
@@ -295,7 +405,9 @@ public struct VehicleEditorSheet: View {
                 plateNumber: plateNumber.isEmpty ? nil : plateNumber,
                 vehicleType: vehicleType,
                 tankCapacity: capacity,
-                initialOdometer: odo
+                initialOdometer: odo,
+                cityFuelConsumption: city,
+                highwayFuelConsumption: highway
             )
         }
         Haptics.success()

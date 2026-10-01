@@ -53,7 +53,7 @@ public final class StationSearchService: ObservableObject {
     /// Searches for nearby gas stations or petrol sheds using MapKit's MKLocalSearch
     public func searchStations(
         near coordinate: CLLocationCoordinate2D? = nil,
-        query: String = "fuel station",
+        query: String = "petrol shed",
         region: MKCoordinateRegion? = nil
     ) async -> [StationResult] {
         await MainActor.run { isSearching = true }
@@ -102,8 +102,7 @@ public final class StationSearchService: ObservableObject {
             await MainActor.run { self.searchResults = stations }
             return stations
         } catch {
-            print("MKLocalSearch error: \(error.localizedDescription)")
-            // Provide Sri Lankan popular station defaults if search fails or offline
+            print("MKLocalSearch error: \(error.localizedDescription). Using Sri Lankan defaults.")
             let defaults = fallbackSriLankanStations(near: coordinate)
             await MainActor.run { self.searchResults = defaults }
             return defaults
@@ -111,12 +110,12 @@ public final class StationSearchService: ObservableObject {
     }
     
     // MARK: - Sri Lankan Brand Classifier
-    private func detectBrand(from title: String) -> String {
+    public func detectBrand(from title: String) -> String {
         let lower = title.lowercased()
-        if lower.contains("ceypetco") || lower.contains("ceylon petroleum") {
+        if lower.contains("ceypetco") || lower.contains("ceylon petroleum") || lower.contains("cpc") {
             return "Ceypetco"
         }
-        if lower.contains("lioc") || lower.contains("lanka ioc") || lower.contains("ioc") {
+        if lower.contains("lioc") || lower.contains("lanka ioc") || lower.contains("ioc") || lower.contains("indian oil") {
             return "Lanka IOC"
         }
         if lower.contains("sinopec") {

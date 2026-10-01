@@ -142,7 +142,7 @@ public struct DashboardView: View {
         }
     }
     
-    // MARK: - Vehicle Profile Banner
+    // MARK: - Vehicle Profile Banner with Dual Baselines
     private var vehicleProfileBanner: some View {
         Button(action: {
             Haptics.light()
@@ -192,7 +192,7 @@ public struct DashboardView: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
-                            Text("Target: \(String(format: "%.1f", settings.targetEfficiency)) \(settings.unitSystem.efficiencyUnit)")
+                            Text("Targets: \(String(format: "%.0f", vehicle.effectiveCityConsumption))/\(String(format: "%.0f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -221,8 +221,9 @@ public struct DashboardView: View {
                     .background(AppTheme.primaryGradient)
                     .foregroundColor(.white)
                     .clipShape(Capsule())
-                } else if viewModel.averageEfficiency > 0 {
-                    let ratio = viewModel.averageEfficiency / max(settings.targetEfficiency, 1.0)
+                } else if viewModel.logs.count >= 2 && viewModel.averageEfficiency > 0 {
+                    let cityTarget = viewModel.selectedVehicle?.effectiveCityConsumption ?? 10.0
+                    let ratio = viewModel.averageEfficiency / max(cityTarget, 1.0)
                     HStack(spacing: 4) {
                         Image(systemName: ratio >= 1.0 ? "arrow.up.right" : "arrow.down.right")
                         Text("\(Int(ratio * 100))%")
@@ -292,70 +293,162 @@ public struct DashboardView: View {
         }
     }
     
-    // MARK: - Animated Efficiency Gauge Card
+    // MARK: - Animated Circular Gauge with Dual City/Highway Benchmarking
     private var efficiencyGaugeCard: some View {
-        let target = max(settings.targetEfficiency, 1.0)
-        let efficiency = viewModel.averageEfficiency
-        let normalizedProgress = efficiency > 0 ? min(efficiency / target, 1.0) : 0.0
+        let hasEnoughLogs = viewModel.logs.count >= 2
+        let actualEfficiency = hasEnoughLogs ? viewModel.averageEfficiency : 0.0
+        let cityTarget = viewModel.selectedVehicle?.effectiveCityConsumption ?? 10.0
+        let highwayTarget = viewModel.selectedVehicle?.effectiveHighwayConsumption ?? 15.0
         
-        return VStack(spacing: 18) {
+        // Dynamic upper scale to give generous head-room
+        let maxScale = max(highwayTarget * 1.35, actualEfficiency * 1.15, 25.0)
+        
+        // Gauge geometry: 270-degree arc from 135° to 405°
+        let startAngle: Double = 135.0
+        let sweepAngle: Double = 270.0
+        let ringTrimMax: CGFloat = 0.75
+        let ringThickness: CGFloat = 16.0
+        let ringDiameter: CGFloat = 195.0
+        let markerRadius: CGFloat = (ringDiameter / 2.0)
+        
+        // Ratios (0.0 to 1.0)
+        let actualRatio = hasEnoughLogs && actualEfficiency > 0 ? min(actualEfficiency / maxScale, 1.0) : 0.0
+        let cityRatio = min(max(cityTarget / maxScale, 0.0), 1.0)
+        let highwayRatio = min(max(highwayTarget / maxScale, 0.0), 1.0)
+        
+        // Angles for Target Marker Lines
+        let cityAngle = startAngle + (cityRatio * sweepAngle)
+        let highwayAngle = startAngle + (highwayRatio * sweepAngle)
+        
+        return VStack(spacing: 16) {
             ZStack {
-                // Background Circular Track
+                // 1. Background Inactive Arc Track
                 Circle()
-                    .stroke(Color.secondary.opacity(0.15), style: StrokeStyle(lineWidth: 18, lineCap: .round))
-                    .frame(width: 185, height: 185)
-                
-                // Dynamic Animated Progress Arc
-                Circle()
-                    .trim(from: 0, to: animateRing ? CGFloat(normalizedProgress) : 0)
+                    .trim(from: 0.0, to: ringTrimMax)
                     .stroke(
-                        efficiency >= target ? AppTheme.emeraldGradient : AppTheme.primaryGradient,
-                        style: StrokeStyle(lineWidth: 18, lineCap: .round)
+                        Color.secondary.opacity(0.14),
+                        style: StrokeStyle(lineWidth: ringThickness, lineCap: .round)
                     )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 185, height: 185)
-                    .animation(.spring(response: 1.2, dampingFraction: 0.8), value: animateRing)
+                    .rotationEffect(.degrees(startAngle))
+                    .frame(width: ringDiameter, height: ringDiameter)
                 
-                VStack(spacing: 4) {
-                    Image(systemName: "gauge.with.dots.needle.bottom.50percent")
-                        .font(.title3)
-                        .foregroundStyle(efficiency >= target ? AppTheme.emeraldGradient : AppTheme.primaryGradient)
-                    
-                    if efficiency > 0 {
-                        Text(String(format: "%.1f", efficiency))
-                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                // 2. City Target Marker Line
+                Rectangle()
+                    .fill(Color.orange)
+                    .frame(width: 3.5, height: ringThickness + 8)
+                    .offset(y: -markerRadius)
+                    .rotationEffect(.degrees(cityAngle))
+                    .shadow(color: Color.orange.opacity(0.4), radius: 3)
+                
+                // 3. Highway Target Marker Line
+                Rectangle()
+                    .fill(Color.green)
+                    .frame(width: 3.5, height: ringThickness + 8)
+                    .offset(y: -markerRadius)
+                    .rotationEffect(.degrees(highwayAngle))
+                    .shadow(color: Color.green.opacity(0.4), radius: 3)
+                
+                // 4. Dynamic Animated Actual Efficiency Arc
+                if hasEnoughLogs && actualEfficiency > 0 {
+                    Circle()
+                        .trim(from: 0.0, to: animateRing ? CGFloat(actualRatio * sweepAngle / 360.0) : 0.0)
+                        .stroke(
+                            actualEfficiency >= highwayTarget ? AppTheme.emeraldGradient : AppTheme.primaryGradient,
+                            style: StrokeStyle(lineWidth: ringThickness, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(startAngle))
+                        .frame(width: ringDiameter, height: ringDiameter)
+                        .animation(.spring(response: 1.2, dampingFraction: 0.8), value: animateRing)
+                }
+                
+                // 5. Center Status Display
+                VStack(spacing: 3) {
+                    if hasEnoughLogs {
+                        Image(systemName: "gauge.with.dots.needle.bottom.50percent")
+                            .font(.subheadline)
+                            .foregroundStyle(actualEfficiency >= highwayTarget ? AppTheme.emeraldGradient : AppTheme.primaryGradient)
+                        
+                        Text(String(format: "%.1f", actualEfficiency))
+                            .font(.system(size: 44, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
+                            .contentTransition(.numericText())
                         
                         Text(settings.unitSystem.efficiencyUnit)
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(.secondary)
+                        
+                        // Performance Tag vs Baselines
+                        if actualEfficiency >= highwayTarget {
+                            Text("Exceeding Highway")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.green.opacity(0.18))
+                                .foregroundColor(.green)
+                                .clipShape(Capsule())
+                                .padding(.top, 2)
+                        } else if actualEfficiency >= cityTarget {
+                            Text("Within Target Range")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.blue.opacity(0.16))
+                                .foregroundColor(.blue)
+                                .clipShape(Capsule())
+                                .padding(.top, 2)
+                        } else {
+                            Text("Below City Target")
+                                .font(.system(size: 10, weight: .bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.orange.opacity(0.18))
+                                .foregroundColor(.orange)
+                                .clipShape(Capsule())
+                                .padding(.top, 2)
+                        }
                     } else {
-                        Text("--")
-                            .font(.system(size: 38, weight: .bold, design: .rounded))
+                        // Graceful "No logs yet" State to Prevent Division by Zero
+                        Image(systemName: "fuelpump.circle")
+                            .font(.system(size: 32))
                             .foregroundColor(.secondary)
-                        Text("No Data Yet")
-                            .font(.caption)
+                            .padding(.bottom, 2)
+                        
+                        Text("No logs yet")
+                            .font(.headline)
                             .foregroundColor(.secondary)
+                        
+                        Text("Record 2+ fill-ups")
+                            .font(.caption2)
+                            .foregroundColor(.secondary.opacity(0.8))
                     }
                 }
             }
-            .padding(.top, 8)
+            .padding(.top, 10)
             
-            HStack(spacing: 8) {
-                Label(
-                    title: { Text("\(viewModel.logs.count) Fill-Ups").font(.caption).foregroundColor(.secondary) },
-                    icon: { Image(systemName: "checkmark.seal.fill").foregroundColor(.blue).font(.caption) }
-                )
-                
-                if let last = viewModel.latestLog, let eff = viewModel.tripEfficiency(for: last) {
-                    Text("•")
+            // Dual Baseline Target Markers Legend
+            HStack(spacing: 16) {
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.orange)
+                        .frame(width: 10, height: 10)
+                    Text("City Target: \(String(format: "%.1f", cityTarget)) \(settings.unitSystem.efficiencyUnit)")
+                        .font(.caption2)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
-                    Text("Latest: \(settings.formatEfficiency(eff))")
-                        .font(.caption)
-                        .foregroundColor(eff >= target ? .green : .blue)
+                }
+                
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.green)
+                        .frame(width: 10, height: 10)
+                    Text("Hwy Target: \(String(format: "%.1f", highwayTarget)) \(settings.unitSystem.efficiencyUnit)")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
                 }
             }
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .modernCard(padding: 18)
@@ -486,7 +579,7 @@ public struct DashboardView: View {
                     Text("No Fuel Logs for \(viewModel.selectedVehicle?.name ?? "This Vehicle")")
                         .font(.headline)
                     
-                    Text("Record your first fill-up or scan a receipt to immediately preview Sri Lankan fuel analytics.")
+                    Text("Record your first fill-up or scan a thermal receipt to immediately benchmark Sri Lankan fuel efficiency.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -598,9 +691,20 @@ public struct RecentLogCard: View {
             }
             
             VStack(alignment: .leading, spacing: 3) {
-                Text(log.stationName ?? "Fuel Station")
-                    .font(.system(.subheadline, weight: .semibold))
-                    .foregroundColor(.primary)
+                HStack(spacing: 6) {
+                    Text(log.stationName ?? "Fuel Station")
+                        .font(.system(.subheadline, weight: .semibold))
+                        .foregroundColor(.primary)
+                    
+                    let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
+                    Text(condition.rawValue)
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(condition.badgeColor.opacity(0.15))
+                        .foregroundColor(condition.badgeColor)
+                        .clipShape(Capsule())
+                }
                 
                 HStack(spacing: 6) {
                     Text(log.date.formatted(date: .abbreviated, time: .omitted))

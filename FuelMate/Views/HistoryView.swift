@@ -240,6 +240,15 @@ public struct FuelLogRowView: View {
                     Text(log.stationName ?? "Fuel Station")
                         .font(.system(.body, weight: .semibold))
                     
+                    let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
+                    Text(condition.rawValue)
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(condition.badgeColor.opacity(0.15))
+                        .foregroundColor(condition.badgeColor)
+                        .clipShape(Capsule())
+                    
                     if log.hasValidLocation {
                         Image(systemName: "location.fill")
                             .font(.caption2)
@@ -399,9 +408,17 @@ public struct LogDetailView: View {
                     
                     DetailMetricTile(
                         title: "Fuel Grade",
-                        value: log.fuelGrade ?? "Petrol 92 Octane",
+                        value: log.fuelGrade ?? "Petrol Octane 92",
                         icon: "drop.fill",
                         color: .teal
+                    )
+                    
+                    let cond = TripCondition(rawValue: log.effectiveTripType) ?? .city
+                    DetailMetricTile(
+                        title: "Trip Condition",
+                        value: cond.rawValue,
+                        icon: cond.iconName,
+                        color: cond.badgeColor
                     )
                 }
                 

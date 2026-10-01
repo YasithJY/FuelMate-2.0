@@ -6,6 +6,7 @@ public struct AddLogView: View {
     @ObservedObject public var viewModel: FuelLogViewModel
     @StateObject private var locationManager = LocationManager()
     @ObservedObject private var settings = UnitSettings.shared
+    @ObservedObject private var priceManager = FuelPriceManager.shared
     
     private enum FormField: Hashable {
         case odometer, volume, totalCost, station, notes
@@ -17,7 +18,8 @@ public struct AddLogView: View {
     @State private var volume: String = ""
     @State private var totalCost: String = ""
     @State private var stationName: String = "Ceypetco"
-    @State private var fuelGrade: String = "Petrol 92 Octane"
+    @State private var fuelGrade: String = "Petrol Octane 92"
+    @State private var tripType: String = "City"
     @State private var isFullTank: Bool = true
     @State private var date: Date = Date()
     @State private var notes: String = ""
@@ -26,7 +28,6 @@ public struct AddLogView: View {
     @State private var locality: String? = nil
     
     @State private var showingMapPicker = false
-    @State private var showingScannerSheet = false
     @State private var saveErrorMessage: String? = nil
     @State private var isPrefilledFromReceipt: Bool = false
     
@@ -74,6 +75,11 @@ public struct AddLogView: View {
         return nil
     }
     
+    // Current Market Rate based on selected fuel grade
+    private var currentUnitPrice: Double {
+        priceManager.getPrice(for: fuelGrade)
+    }
+    
     // MARK: - Validation Computations
     private var isOdometerRegressed: Bool {
         guard let currentOdo = parsedOdometer, let prevOdo = previousOdometer else {
@@ -83,11 +89,19 @@ public struct AddLogView: View {
     }
     
     private var odometerErrorMessage: String? {
-        guard let currentOdo = parsedOdometer, let prevOdo = previousOdometer else {
+        guard let currentOdo = parsedOdometer else {
+            if !odometer.isEmpty {
+                return "Please enter a valid numeric odometer reading."
+            }
             return nil
         }
-        if currentOdo <= prevOdo {
-            return "Odometer must be higher than previous: \(settings.formatDistance(prevOdo))"
+        
+        if currentOdo <= 0 {
+            return "Odometer must be strictly greater than 0."
+        }
+        
+        if let prevOdo = previousOdometer, currentOdo <= prevOdo {
+            return "Odometer must be higher than previous (\(settings.formatDistance(prevOdo)))."
         }
         return nil
     }
@@ -104,10 +118,12 @@ public struct AddLogView: View {
     }
     
     // Live calculated unit price
-    private var calculatedUnitPrice: Double? {
-        guard let vol = parsedVolume, let cost = parsedTotalCost, vol > 0 else { return nil }
-        let price = cost / vol
-        return price.isFinite && price > 0 ? price : nil
+    private var effectiveUnitPrice: Double {
+        if let vol = parsedVolume, let cost = parsedTotalCost, vol > 0 {
+            let p = cost / vol
+            if p.isFinite && p > 0 { return p }
+        }
+        return currentUnitPrice
     }
     
     // Live calculated trip distance
@@ -127,7 +143,7 @@ public struct AddLogView: View {
     public var body: some View {
         NavigationStack {
             Form {
-                // MARK: - No Vehicle Warning
+                // MARK: - Vehicle Warning
                 if viewModel.selectedVehicle == nil {
                     Section {
                         HStack(spacing: 12) {
@@ -166,44 +182,83 @@ public struct AddLogView: View {
                     }
                 }
                 
-                // MARK: - Live Calculation Floating Badge
-                if let unitPrice = calculatedUnitPrice {
-                    Section {
-                        HStack(spacing: 12) {
-                            Image(systemName: "sparkles")
-                                .foregroundStyle(AppTheme.primaryGradient)
-                                .font(.title3)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Live Calculations")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .textCase(.uppercase)
-                                
-                                HStack(spacing: 6) {
-                                    Text(settings.formatUnitPrice(unitPrice))
-                                        .font(.subheadline)
-                                        .bold()
-                                        .foregroundColor(.primary)
-                                    
-                                    if let eff = calculatedTripEfficiency {
-                                        Text("•")
-                                            .foregroundColor(.secondary)
-                                        Text(settings.formatEfficiency(eff))
-                                            .font(.subheadline)
-                                            .bold()
-                                            .foregroundColor(eff >= settings.targetEfficiency ? .green : .blue)
-                                    }
-                                }
-                            }
-                            Spacer()
+                // MARK: - Section 1: Trip Type Driving Condition
+                Section(
+                    header: Text("Trip Driving Condition"),
+                    footer: Text("Categorize driving for this fuel load to benchmark against your City or Highway consumption targets.")
+                ) {
+                    Picker("Trip Type", selection: $tripType) {
+                        ForEach(TripCondition.allCases) { condition in
+                            Text(condition.rawValue).tag(condition.rawValue)
                         }
-                        .padding(.vertical, 2)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    HStack {
+                        let condition = TripCondition(rawValue: tripType) ?? .city
+                        Image(systemName: condition.iconName)
+                            .foregroundColor(condition.badgeColor)
+                        
+                        Text("Active Benchmark:")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        if let vehicle = viewModel.selectedVehicle {
+                            if condition == .city {
+                                Text("City Target: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) km/L")
+                                    .font(.caption)
+                                    .bold()
+                                    .foregroundColor(.orange)
+                            } else if condition == .highway {
+                                Text("Highway Target: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) km/L")
+                                    .font(.caption)
+                                    .bold()
+                                    .foregroundColor(.green)
+                            } else {
+                                let mixed = (vehicle.effectiveCityConsumption + vehicle.effectiveHighwayConsumption) / 2.0
+                                Text("Mixed Benchmark: \(String(format: "%.1f", mixed)) km/L")
+                                    .font(.caption)
+                                    .bold()
+                                    .foregroundColor(.blue)
+                            }
+                        }
                     }
                 }
                 
-                // MARK: - Section 1: Fill-Up Metrics
-                Section(header: Text("Fill-Up Values")) {
+                // MARK: - Section 2: Fuel Grade & Market Unit Price
+                Section(
+                    header: Text("Fuel Grade & Live Market Rate"),
+                    footer: Text("Unit price auto-syncs with the Fuel Price Manager. Changing Volume or Cost will auto-calculate the other.")
+                ) {
+                    Picker("Fuel Grade", selection: $fuelGrade) {
+                        ForEach(SriLankanEcosystem.fuelGrades, id: \.self) { grade in
+                            Text(grade).tag(grade)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: fuelGrade) { _, newGrade in
+                        recalculateOnGradeChange(newGrade: newGrade)
+                    }
+                    
+                    HStack {
+                        Label("Market Unit Price", systemImage: "tag.fill")
+                            .font(.subheadline)
+                        Spacer()
+                        Text("\(settings.currencySymbol) \(String(format: "%.2f", currentUnitPrice)) / \(settings.unitSystem.volumeUnit)")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(Color(red: 0.0, green: 0.72, blue: 0.83))
+                    }
+                }
+                
+                // MARK: - Section 3: Fill-Up Metrics with Smart Auto-Calculation
+                Section(
+                    header: Text("Fill-Up Metrics"),
+                    footer: Text("Odometer, Volume, and Total Cost must all be strictly greater than 0.")
+                ) {
+                    // Odometer Input
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Image(systemName: "speedometer")
@@ -214,12 +269,12 @@ public struct AddLogView: View {
                                 .focused($focusedField, equals: .odometer)
                         }
                         
-                        // Inline Odometer Regression Error
+                        // Inline Red Error
                         if let error = odometerErrorMessage {
                             Text(error)
                                 .font(.caption)
                                 .foregroundColor(AppTheme.errorColor)
-                                .fontWeight(.medium)
+                                .fontWeight(.semibold)
                                 .padding(.leading, 32)
                                 .transition(.opacity)
                         } else if let dist = calculatedTripDistance {
@@ -228,13 +283,14 @@ public struct AddLogView: View {
                                 .foregroundColor(.green)
                                 .padding(.leading, 32)
                         } else if let prev = previousOdometer {
-                            Text("Baseline odometer: \(settings.formatDistance(prev))")
+                            Text("Previous odometer: \(settings.formatDistance(prev))")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.leading, 32)
                         }
                     }
                     
+                    // Volume Input (Triggers Total Cost Auto-Calculation)
                     HStack {
                         Image(systemName: "fuelpump.fill")
                             .foregroundColor(.orange)
@@ -242,8 +298,14 @@ public struct AddLogView: View {
                         TextField("Volume (\(settings.unitSystem.volumeUnit))", text: $volume)
                             .keyboardType(.decimalPad)
                             .focused($focusedField, equals: .volume)
+                            .onChange(of: volume) { _, newVol in
+                                if focusedField == .volume {
+                                    handleVolumeInputChanged(newVol)
+                                }
+                            }
                     }
                     
+                    // Total Cost Input (Triggers Volume Auto-Calculation)
                     HStack {
                         Image(systemName: "dollarsign.circle.fill")
                             .foregroundColor(.green)
@@ -251,22 +313,36 @@ public struct AddLogView: View {
                         TextField("Total Cost (\(settings.currencySymbol))", text: $totalCost)
                             .keyboardType(.decimalPad)
                             .focused($focusedField, equals: .totalCost)
+                            .onChange(of: totalCost) { _, newCost in
+                                if focusedField == .totalCost {
+                                    handleTotalCostInputChanged(newCost)
+                                }
+                            }
+                    }
+                    
+                    // Live Efficiency Preview
+                    if let eff = calculatedTripEfficiency {
+                        HStack {
+                            Image(systemName: "gauge.with.dots.needle.bottom.50percent")
+                                .foregroundColor(.teal)
+                                .frame(width: 24)
+                            Text("Estimated Trip Economy:")
+                                .font(.caption)
+                            Spacer()
+                            Text(settings.formatEfficiency(eff))
+                                .font(.subheadline)
+                                .bold()
+                                .foregroundColor(.green)
+                        }
                     }
                 }
                 
-                // MARK: - Section 2: Fuel Grade & Date
-                Section(header: Text("Fuel Grade & Tank Condition")) {
-                    Picker("Fuel Grade", selection: $fuelGrade) {
-                        ForEach(SriLankanEcosystem.fuelGrades, id: \.self) { grade in
-                            Text(grade).tag(grade)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    
+                // MARK: - Section 4: Condition & Date
+                Section(header: Text("Condition & Timestamp")) {
                     Toggle(isOn: $isFullTank) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Filled to Full Tank")
-                            Text("Used to calculate exact fuel consumption between fill-ups.")
+                            Text("Required for exact consumption calculations between fuel stops.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -275,7 +351,7 @@ public struct AddLogView: View {
                     DatePicker("Date & Time", selection: $date, displayedComponents: [.date, .hourAndMinute])
                 }
                 
-                // MARK: - Section 3: Station Brand & Map Selector
+                // MARK: - Section 5: Station Brand & Map Selector
                 Section(header: Text("Station Brand & Location")) {
                     HStack {
                         Image(systemName: "building.2.fill")
@@ -363,9 +439,9 @@ public struct AddLogView: View {
                     }
                 }
                 
-                // MARK: - Section 4: Driving Notes
+                // MARK: - Section 6: Driving Notes
                 Section(header: Text("Notes (Optional)")) {
-                    TextField("Expressway run, tire pressure checked, discount used, etc.", text: $notes, axis: .vertical)
+                    TextField("Highway AC running, traffic delays, tire pressure checked, etc.", text: $notes, axis: .vertical)
                         .lineLimit(2...4)
                         .focused($focusedField, equals: .notes)
                 }
@@ -396,7 +472,6 @@ public struct AddLogView: View {
                     .disabled(!isFormValid)
                 }
                 
-                // Persistent Keyboard Done Button
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") {
@@ -416,6 +491,37 @@ public struct AddLogView: View {
         }
     }
     
+    // MARK: - Smart Auto-Calculation Handlers
+    private func handleVolumeInputChanged(_ newVol: String) {
+        guard let vol = Double(newVol.replacingOccurrences(of: ",", with: ".")), vol > 0 else { return }
+        let rate = currentUnitPrice
+        guard rate > 0 else { return }
+        let calculatedCost = vol * rate
+        totalCost = String(format: "%.2f", calculatedCost)
+    }
+    
+    private func handleTotalCostInputChanged(_ newCost: String) {
+        guard let cost = Double(newCost.replacingOccurrences(of: ",", with: ".")), cost > 0 else { return }
+        let rate = currentUnitPrice
+        guard rate > 0 else { return }
+        let calculatedVol = cost / rate
+        volume = String(format: "%.2f", calculatedVol)
+    }
+    
+    private func recalculateOnGradeChange(newGrade: String) {
+        let rate = priceManager.getPrice(for: newGrade)
+        guard rate > 0 else { return }
+        
+        if let vol = parsedVolume, vol > 0 {
+            let cost = vol * rate
+            totalCost = String(format: "%.2f", cost)
+        } else if let cost = parsedTotalCost, cost > 0 {
+            let vol = cost / rate
+            volume = String(format: "%.2f", vol)
+        }
+    }
+    
+    // MARK: - Save Log Action
     private func saveLog() {
         guard let odo = parsedOdometer,
               let vol = parsedVolume,
@@ -435,6 +541,7 @@ public struct AddLogView: View {
                 longitude: finalLon,
                 locality: finalLocality,
                 fuelGrade: fuelGrade,
+                tripType: tripType,
                 notes: notes,
                 isFullTank: isFullTank,
                 date: date

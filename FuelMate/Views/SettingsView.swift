@@ -3,8 +3,10 @@ import SwiftUI
 public struct SettingsView: View {
     @ObservedObject public var viewModel: FuelLogViewModel
     @ObservedObject private var settings = UnitSettings.shared
+    @ObservedObject private var priceManager = FuelPriceManager.shared
     
     @State private var showingResetAlert = false
+    @State private var showingPriceResetAlert = false
     
     private let availableCurrencies = ["Rs.", "$", "€", "£", "₹", "AED", "SGD", "AUD"]
     
@@ -18,7 +20,7 @@ public struct SettingsView: View {
                 // Section 1: Active Vehicle & Fleet Management
                 Section(
                     header: Text("Vehicle Fleet"),
-                    footer: Text("Manage multiple vehicles, plate numbers, and baseline tank capacities.")
+                    footer: Text("Manage multiple vehicles, baseline City/Highway consumption targets, and tank capacities.")
                 ) {
                     NavigationLink(destination: VehicleManagementView(viewModel: viewModel)) {
                         HStack(spacing: 12) {
@@ -46,28 +48,103 @@ public struct SettingsView: View {
                         }
                     }
                     
-                    VStack(alignment: .leading, spacing: 6) {
+                    if let vehicle = viewModel.selectedVehicle {
                         HStack {
-                            Image(systemName: "target")
-                                .foregroundColor(.green)
+                            Image(systemName: "building.2.crop.circle")
+                                .foregroundColor(.orange)
                                 .frame(width: 24)
-                            Text("Target Economy")
+                            Text("City Baseline Target")
                             Spacer()
-                            Text("\(String(format: "%.1f", settings.targetEfficiency)) \(settings.unitSystem.efficiencyUnit)")
+                            Text("\(String(format: "%.1f", vehicle.effectiveCityConsumption)) \(settings.unitSystem.efficiencyUnit)")
                                 .bold()
                                 .foregroundColor(.primary)
                         }
                         
-                        Slider(
-                            value: $settings.targetEfficiency,
-                            in: 5...60,
-                            step: 0.5
-                        )
-                        .tint(Color(red: 0.0, green: 0.72, blue: 0.83))
+                        HStack {
+                            Image(systemName: "road.lanes")
+                                .foregroundColor(.green)
+                                .frame(width: 24)
+                            Text("Highway Baseline Target")
+                            Spacer()
+                            Text("\(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                .bold()
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
                 
-                // Section 2: Units & Measurement
+                // Section 2: Dedicated Current Fuel Prices (LKR/L)
+                Section(
+                    header: Text("Current Fuel Prices (LKR/L)"),
+                    footer: Text("Live Sri Lankan market rates. Updating these prices immediately applies to unit price calculations and receipt audits in the Add Fill-Up sheet.")
+                ) {
+                    FuelPriceRow(
+                        title: "Petrol Octane 92",
+                        subtitle: "Standard Unleaded",
+                        icon: "fuelpump.fill",
+                        iconColor: .orange,
+                        price: $priceManager.petrol92,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    FuelPriceRow(
+                        title: "Petrol Octane 95 (Premium)",
+                        subtitle: "LIOC / Sinopec Premium",
+                        icon: "fuelpump.fill",
+                        iconColor: .blue,
+                        price: $priceManager.petrol95Premium,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    FuelPriceRow(
+                        title: "Petrol Octane 95 (Euro 4)",
+                        subtitle: "CPC Euro 4 Standard",
+                        icon: "fuelpump.fill",
+                        iconColor: .teal,
+                        price: $priceManager.petrol95Euro4,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    FuelPriceRow(
+                        title: "Petrol XtraPremium Euro 3",
+                        subtitle: "LIOC Additive Blend",
+                        icon: "fuelpump.fill",
+                        iconColor: .purple,
+                        price: $priceManager.xtraPremiumEuro3,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    FuelPriceRow(
+                        title: "Lanka Auto Diesel",
+                        subtitle: "Standard Diesel",
+                        icon: "drop.fill",
+                        iconColor: .gray,
+                        price: $priceManager.autoDiesel,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    FuelPriceRow(
+                        title: "Lanka Super Diesel 4 Star (Euro 4)",
+                        subtitle: "Low Sulfur Premium Diesel",
+                        icon: "sparkles",
+                        iconColor: .green,
+                        price: $priceManager.superDieselEuro4,
+                        currencySymbol: settings.currencySymbol
+                    )
+                    
+                    Button(action: {
+                        showingPriceResetAlert = true
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("Reset Prices to October 2026 Rates")
+                        }
+                        .font(.footnote)
+                        .foregroundColor(Color(red: 0.0, green: 0.72, blue: 0.83))
+                    }
+                }
+                
+                // Section 3: Units & Measurement
                 Section(header: Text("Units & Measurement")) {
                     Picker("Unit System", selection: Binding(
                         get: { settings.unitSystem },
@@ -104,7 +181,7 @@ public struct SettingsView: View {
                     }
                 }
                 
-                // Section 3: Currency & Localization
+                // Section 4: Currency & Localization
                 Section(
                     header: Text("Currency"),
                     footer: Text("Defaults to Sri Lankan Rupee (Rs.). Instant toggle to international currencies.")
@@ -123,7 +200,7 @@ public struct SettingsView: View {
                     .pickerStyle(.menu)
                 }
                 
-                // Section 4: Data Management & Export
+                // Section 5: Data Management & Export
                 Section(
                     header: Text("Data Management & Export"),
                     footer: Text("Export your complete history as a standard RFC-4180 CSV file.")
@@ -150,7 +227,7 @@ public struct SettingsView: View {
                     }
                 }
                 
-                // Section 5: Architecture & About
+                // Section 6: Architecture & About
                 Section(header: Text("About FuelMate")) {
                     HStack(spacing: 16) {
                         Image("AppLogo")
@@ -203,6 +280,15 @@ public struct SettingsView: View {
                     .bold()
                 }
             }
+            .alert("Reset Fuel Prices?", isPresented: $showingPriceResetAlert) {
+                Button("Reset to Defaults", role: .destructive) {
+                    Haptics.medium()
+                    priceManager.resetToDefaults()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will restore default October 2026 Sri Lankan market rates (e.g. Petrol 92 at Rs. 414.00, Auto Diesel at Rs. 392.00).")
+            }
             .alert("Clear All Records?", isPresented: $showingResetAlert) {
                 Button("Clear Everything", role: .destructive) {
                     Haptics.medium()
@@ -212,6 +298,72 @@ public struct SettingsView: View {
             } message: {
                 Text("Are you sure you want to permanently erase all fuel records? This action cannot be undone.")
             }
+        }
+    }
+}
+
+// MARK: - Fuel Price Row Component
+private struct FuelPriceRow: View {
+    let title: String
+    let subtitle: String?
+    let icon: String
+    let iconColor: Color
+    @Binding var price: Double
+    let currencySymbol: String
+    
+    @State private var textValue: String = ""
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(iconColor)
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body)
+                if let sub = subtitle {
+                    Text(sub)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 4) {
+                Text(currencySymbol)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                TextField("Price", text: Binding(
+                    get: {
+                        if textValue.isEmpty {
+                            return String(format: "%.2f", price)
+                        }
+                        return textValue
+                    },
+                    set: { newValue in
+                        textValue = newValue
+                        if let parsed = Double(newValue.replacingOccurrences(of: ",", with: ".")) {
+                            price = max(0.0, parsed)
+                        }
+                    }
+                ))
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 86)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(Color(uiColor: .tertiarySystemFill))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            }
+        }
+        .onAppear {
+            textValue = String(format: "%.2f", price)
+        }
+        .onChange(of: price) { _, newPrice in
+            textValue = String(format: "%.2f", newPrice)
         }
     }
 }

@@ -7,9 +7,9 @@ public struct ReceiptScannerView: View {
     
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var selectedImage: UIImage? = nil
+    @State private var showingCameraPicker = false
     @State private var isProcessing = false
-    @State private var scanStatusMessage = "Position receipt in frame or select photo"
-    @State private var scanProgress: CGFloat = 0.0
+    @State private var scanStatusMessage = "Position thermal receipt in frame or select photo"
     @State private var scannedResult: ScannedReceiptData? = nil
     @State private var showAddLogWithScannedData = false
     @State private var errorMessage: String? = nil
@@ -19,10 +19,14 @@ public struct ReceiptScannerView: View {
         self.viewModel = viewModel
     }
     
+    private var isCameraAvailable: Bool {
+        UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
+    
     public var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                // MARK: - Scanning Viewport / Card
+                // MARK: - Scanning Viewport / Reticle Card
                 ZStack {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(Color(uiColor: .secondarySystemGroupedBackground))
@@ -39,7 +43,7 @@ public struct ReceiptScannerView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                             .padding(6)
                     } else {
-                        // Scanner Placeholder / Viewfinder Reticle
+                        // Viewfinder Reticle
                         VStack(spacing: 14) {
                             ZStack {
                                 Circle()
@@ -51,11 +55,11 @@ public struct ReceiptScannerView: View {
                                     .foregroundStyle(AppTheme.primaryGradient)
                             }
                             
-                            Text("Apple Vision OCR Scanner")
+                            Text("On-Device Thermal Receipt Scanner")
                                 .font(.headline)
                                 .foregroundColor(.primary)
                             
-                            Text("Extracts Total Cost, Liters, and Station Brand automatically from your fuel receipt.")
+                            Text("Apple Vision OCR extracts Station Brand (CEYPETCO, LIOC, SINOPEC), Total Cost, and Liters with zero cloud APIs.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -63,13 +67,12 @@ public struct ReceiptScannerView: View {
                         }
                     }
                     
-                    // Scanning Animation Overlay (Laser Beam)
+                    // Laser Beam Scanning Overlay
                     if isProcessing {
                         ZStack {
                             Color.black.opacity(0.35)
                                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                             
-                            // Laser Line
                             Rectangle()
                                 .fill(
                                     LinearGradient(
@@ -101,12 +104,31 @@ public struct ReceiptScannerView: View {
                         }
                     }
                 }
-                .frame(height: 320)
+                .frame(height: 310)
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
                 
                 // MARK: - Action Buttons
                 VStack(spacing: 12) {
+                    if isCameraAvailable {
+                        Button(action: {
+                            Haptics.medium()
+                            showingCameraPicker = true
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "camera.fill")
+                                Text("Scan Receipt with Camera")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(AppTheme.primaryGradient)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .disabled(isProcessing)
+                    }
+                    
                     PhotosPicker(
                         selection: $selectedPhotoItem,
                         matching: .images,
@@ -119,56 +141,56 @@ public struct ReceiptScannerView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(AppTheme.primaryGradient)
-                        .foregroundColor(.white)
+                        .background(isCameraAvailable ? Color.secondary.opacity(0.12) : Color.blue)
+                        .foregroundColor(isCameraAvailable ? .primary : .white)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .disabled(isProcessing)
                     
-                    // Quick Demo Receipt Tester for Instant Testing
+                    // Quick Demo Thermal Receipt Tester
                     Menu {
-                        Button("Ceypetco Receipt (Rs. 6,220.00 • 20.0 L)") {
-                            testWithSimulatedReceipt(
+                        Button("Ceypetco Receipt (Rs. 8,280.00 • 20.0 L Petrol 92)") {
+                            testWithSimulatedThermalReceipt(
                                 station: "Ceypetco",
-                                grade: "Petrol 92 Octane",
-                                cost: 6220.0,
+                                grade: "Petrol Octane 92",
+                                cost: 8280.0,
                                 volume: 20.0
                             )
                         }
-                        Button("Lanka IOC Receipt (Rs. 5,909.00 • 19.0 L)") {
-                            testWithSimulatedReceipt(
+                        Button("Lanka IOC Receipt (Rs. 6,650.00 • 15.0 L Petrol 95)") {
+                            testWithSimulatedThermalReceipt(
                                 station: "Lanka IOC",
-                                grade: "Petrol 92 Octane",
-                                cost: 5909.0,
-                                volume: 19.0
+                                grade: "Petrol Octane 95 (Premium)",
+                                cost: 6650.0,
+                                volume: 15.0
                             )
                         }
-                        Button("Sinopec Receipt (Rs. 5,660.20 • 18.2 L)") {
-                            testWithSimulatedReceipt(
+                        Button("Sinopec Receipt (Rs. 7,840.00 • 20.0 L Auto Diesel)") {
+                            testWithSimulatedThermalReceipt(
                                 station: "Sinopec",
-                                grade: "Petrol 92 Octane",
-                                cost: 5660.2,
-                                volume: 18.2
+                                grade: "Lanka Auto Diesel",
+                                cost: 7840.0,
+                                volume: 20.0
                             )
                         }
-                        Button("Shell / RM Parks (Rs. 7,087.60 • 18.8 L Super Diesel)") {
-                            testWithSimulatedReceipt(
+                        Button("Shell / RM Parks (Rs. 8,700.00 • 20.0 L Super Diesel)") {
+                            testWithSimulatedThermalReceipt(
                                 station: "Shell / RM Parks",
-                                grade: "Super Diesel (Euro 4)",
-                                cost: 7087.6,
-                                volume: 18.8
+                                grade: "Lanka Super Diesel 4 Star (Euro 4)",
+                                cost: 8700.0,
+                                volume: 20.0
                             )
                         }
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "sparkles")
-                            Text("Try Sample Sri Lankan Receipt")
+                            Text("Test with Sample Sri Lankan Receipt")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.secondary.opacity(0.12))
+                        .background(Color.secondary.opacity(0.08))
                         .foregroundColor(.primary)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
@@ -200,6 +222,12 @@ public struct ReceiptScannerView: View {
                 guard let item = newItem else { return }
                 loadAndProcessPhotoItem(item)
             }
+            .sheet(isPresented: $showingCameraPicker) {
+                CameraPickerView { image in
+                    self.selectedImage = image
+                    self.processCapturedImage(image)
+                }
+            }
             .sheet(isPresented: $showAddLogWithScannedData) {
                 AddLogView(viewModel: viewModel, prefilledData: scannedResult)
             }
@@ -209,7 +237,7 @@ public struct ReceiptScannerView: View {
     // MARK: - Photo Loading & Vision OCR
     private func loadAndProcessPhotoItem(_ item: PhotosPickerItem) {
         isProcessing = true
-        scanStatusMessage = "Loading image..."
+        scanStatusMessage = "Loading receipt photo..."
         errorMessage = nil
         
         Task {
@@ -218,17 +246,8 @@ public struct ReceiptScannerView: View {
                    let uiImage = UIImage(data: data) {
                     await MainActor.run {
                         self.selectedImage = uiImage
-                        self.scanStatusMessage = "Running Apple Vision OCR..."
                     }
-                    
-                    let result = try await ReceiptScannerService.shared.scanReceipt(from: uiImage)
-                    
-                    await MainActor.run {
-                        self.isProcessing = false
-                        self.scannedResult = result
-                        Haptics.success()
-                        self.showAddLogWithScannedData = true
-                    }
+                    await processCapturedImage(uiImage)
                 } else {
                     await MainActor.run {
                         self.isProcessing = false
@@ -244,10 +263,33 @@ public struct ReceiptScannerView: View {
         }
     }
     
-    // MARK: - Simulated Receipt Runner
-    private func testWithSimulatedReceipt(station: String, grade: String, cost: Double, volume: Double) {
+    private func processCapturedImage(_ uiImage: UIImage) {
         isProcessing = true
-        scanStatusMessage = "Analyzing \(station) receipt..."
+        scanStatusMessage = "Running Apple Vision OCR..."
+        errorMessage = nil
+        
+        Task {
+            do {
+                let result = try await ReceiptScannerService.shared.scanReceipt(from: uiImage)
+                await MainActor.run {
+                    self.isProcessing = false
+                    self.scannedResult = result
+                    Haptics.success()
+                    self.showAddLogWithScannedData = true
+                }
+            } catch {
+                await MainActor.run {
+                    self.isProcessing = false
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    // MARK: - Simulated Thermal Receipt Runner
+    private func testWithSimulatedThermalReceipt(station: String, grade: String, cost: Double, volume: Double) {
+        isProcessing = true
+        scanStatusMessage = "Analyzing \(station) thermal receipt..."
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             let data = ScannedReceiptData(
@@ -255,12 +297,58 @@ public struct ReceiptScannerView: View {
                 volume: volume,
                 stationName: station,
                 fuelGrade: grade,
-                rawText: "CEYLON PETROLEUM CORPORATION\n\(station.uppercased())\nFUEL: \(grade.uppercased())\nQTY: \(volume) L\nTOTAL: RS. \(cost)"
+                rawText: "CEYLON PETROLEUM CORPORATION / LIOC\n\(station.uppercased())\nFUEL GRADE: \(grade.uppercased())\nVOLUME: \(volume) L\nTOTAL AMOUNT: RS. \(cost)"
             )
             self.scannedResult = data
             self.isProcessing = false
             Haptics.success()
             self.showAddLogWithScannedData = true
+        }
+    }
+}
+
+// MARK: - Native UIKit Camera Controller Wrapper
+public struct CameraPickerView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    public let onImageCaptured: (UIImage) -> Void
+    
+    public init(onImageCaptured: @escaping (UIImage) -> Void) {
+        self.onImageCaptured = onImageCaptured
+    }
+    
+    public func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            picker.sourceType = .camera
+        } else {
+            picker.sourceType = .photoLibrary
+        }
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    public func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    public class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPickerView
+        
+        init(_ parent: CameraPickerView) {
+            self.parent = parent
+        }
+        
+        public func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onImageCaptured(image)
+            }
+            parent.dismiss()
+        }
+        
+        public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }

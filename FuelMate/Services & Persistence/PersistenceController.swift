@@ -17,6 +17,8 @@ public struct PersistenceController {
         sampleVehicle.vehicleType = "Car"
         sampleVehicle.tankCapacity = 45.0
         sampleVehicle.initialOdometer = 45000.0
+        sampleVehicle.cityFuelConsumption = 18.0
+        sampleVehicle.highwayFuelConsumption = 22.0
         
         let sampleLog1 = FuelLog(context: viewContext)
         sampleLog1.id = UUID()
@@ -25,7 +27,8 @@ public struct PersistenceController {
         sampleLog1.volume = 20.0
         sampleLog1.totalCost = 6220.0
         sampleLog1.stationName = "Ceypetco"
-        sampleLog1.fuelGrade = "Petrol 92 Octane"
+        sampleLog1.fuelGrade = "Petrol Octane 92"
+        sampleLog1.tripType = "City"
         sampleLog1.isFullTank = true
         sampleLog1.notes = "Full tank at Colombo filling shed"
         sampleLog1.latitude = 6.9271
@@ -40,7 +43,8 @@ public struct PersistenceController {
         sampleLog2.volume = 19.5
         sampleLog2.totalCost = 6064.5
         sampleLog2.stationName = "Lanka IOC"
-        sampleLog2.fuelGrade = "Petrol 92 Octane"
+        sampleLog2.fuelGrade = "Petrol Octane 92"
+        sampleLog2.tripType = "Highway"
         sampleLog2.isFullTank = true
         sampleLog2.notes = "Kandy expressway refill"
         sampleLog2.latitude = 7.2906
@@ -101,6 +105,19 @@ public struct PersistenceController {
         vInitialOdoAttr.isOptional = false
         vInitialOdoAttr.defaultValue = 0.0
         
+        // Dual City/Highway Fuel Consumption Baselines
+        let vCityFuelAttr = NSAttributeDescription()
+        vCityFuelAttr.name = "cityFuelConsumption"
+        vCityFuelAttr.attributeType = .doubleAttributeType
+        vCityFuelAttr.isOptional = false
+        vCityFuelAttr.defaultValue = 10.0
+        
+        let vHighwayFuelAttr = NSAttributeDescription()
+        vHighwayFuelAttr.name = "highwayFuelConsumption"
+        vHighwayFuelAttr.attributeType = .doubleAttributeType
+        vHighwayFuelAttr.isOptional = false
+        vHighwayFuelAttr.defaultValue = 15.0
+        
         // MARK: - Entity 2: FuelLog
         let fuelLogEntity = NSEntityDescription()
         fuelLogEntity.name = "FuelLog"
@@ -143,6 +160,12 @@ public struct PersistenceController {
         logFuelGradeAttr.name = "fuelGrade"
         logFuelGradeAttr.attributeType = .stringAttributeType
         logFuelGradeAttr.isOptional = true
+        
+        let logTripTypeAttr = NSAttributeDescription()
+        logTripTypeAttr.name = "tripType"
+        logTripTypeAttr.attributeType = .stringAttributeType
+        logTripTypeAttr.isOptional = false
+        logTripTypeAttr.defaultValue = "City"
         
         let logIsFullTankAttr = NSAttributeDescription()
         logIsFullTankAttr.name = "isFullTank"
@@ -194,12 +217,13 @@ public struct PersistenceController {
         
         // Assign properties to entities
         vehicleEntity.properties = [
-            vIdAttr, vNameAttr, vPlateAttr, vTypeAttr, vTankAttr, vInitialOdoAttr, vehicleLogsRel
+            vIdAttr, vNameAttr, vPlateAttr, vTypeAttr, vTankAttr, vInitialOdoAttr,
+            vCityFuelAttr, vHighwayFuelAttr, vehicleLogsRel
         ]
         
         fuelLogEntity.properties = [
             logIdAttr, logDateAttr, logOdoAttr, logVolAttr, logTotalCostAttr,
-            logStationNameAttr, logFuelGradeAttr, logIsFullTankAttr, logNotesAttr,
+            logStationNameAttr, logFuelGradeAttr, logTripTypeAttr, logIsFullTankAttr, logNotesAttr,
             logLatAttr, logLonAttr, logLocalityAttr, fuelLogVehicleRel
         ]
         
@@ -267,6 +291,8 @@ public class Vehicle: NSManagedObject, Identifiable {
     @NSManaged public var vehicleType: String
     @NSManaged public var tankCapacity: Double
     @NSManaged public var initialOdometer: Double
+    @NSManaged public var cityFuelConsumption: Double
+    @NSManaged public var highwayFuelConsumption: Double
     @NSManaged public var logs: NSSet?
     
     public var sortedLogs: [FuelLog] {
@@ -288,6 +314,14 @@ public class Vehicle: NSManagedObject, Identifiable {
         }
         return name
     }
+    
+    public var effectiveCityConsumption: Double {
+        cityFuelConsumption > 0 ? cityFuelConsumption : 10.0
+    }
+    
+    public var effectiveHighwayConsumption: Double {
+        highwayFuelConsumption > 0 ? highwayFuelConsumption : 15.0
+    }
 }
 
 // MARK: - Programmatic FuelLog NSManagedObject
@@ -300,6 +334,7 @@ public class FuelLog: NSManagedObject, Identifiable {
     @NSManaged public var totalCost: Double
     @NSManaged public var stationName: String?
     @NSManaged public var fuelGrade: String?
+    @NSManaged public var tripType: String
     @NSManaged public var isFullTank: Bool
     @NSManaged public var notes: String?
     @NSManaged public var latitude: Double
@@ -322,5 +357,9 @@ public class FuelLog: NSManagedObject, Identifiable {
     
     public var fullTankValue: Bool {
         return isFullTank
+    }
+    
+    public var effectiveTripType: String {
+        return tripType.isEmpty ? "City" : tripType
     }
 }
