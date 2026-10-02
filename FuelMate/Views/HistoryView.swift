@@ -225,6 +225,8 @@ public struct FuelLogRowView: View {
     @ObservedObject private var settings = UnitSettings.shared
     
     public var body: some View {
+        let isLevelTracked = viewModel.selectedVehicle?.isLevelTracked ?? true
+        
         HStack(spacing: 12) {
             ZStack {
                 Circle()
@@ -240,14 +242,26 @@ public struct FuelLogRowView: View {
                     Text(log.stationName ?? "Fuel Station")
                         .font(.system(.body, weight: .semibold))
                     
-                    let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
-                    Text(condition.rawValue)
-                        .font(.system(size: 9, weight: .bold))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(condition.badgeColor.opacity(0.15))
-                        .foregroundColor(condition.badgeColor)
-                        .clipShape(Capsule())
+                    if isLevelTracked {
+                        let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
+                        Text(condition.rawValue)
+                            .font(.system(size: 9, weight: .bold))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(condition.badgeColor.opacity(0.15))
+                            .foregroundColor(condition.badgeColor)
+                            .clipShape(Capsule())
+                    }
+                    
+                    if log.isExcluded {
+                        Text("Excluded")
+                            .font(.system(size: 9, weight: .bold))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
+                            .clipShape(Capsule())
+                    }
                     
                     if log.hasValidLocation {
                         Image(systemName: "location.fill")
@@ -288,13 +302,13 @@ public struct FuelLogRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                if let eff = viewModel.tripEfficiency(for: log) {
+                if isLevelTracked, let eff = viewModel.tripEfficiency(for: log) {
                     Text(settings.formatEfficiency(eff))
                         .font(.caption2)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.green.opacity(0.15))
-                        .foregroundColor(.green)
+                        .background(log.isExcluded ? Color.secondary.opacity(0.15) : Color.green.opacity(0.15))
+                        .foregroundColor(log.isExcluded ? .secondary : .green)
                         .clipShape(Capsule())
                 }
             }
@@ -314,6 +328,14 @@ public struct LogDetailView: View {
     public init(log: FuelLog, viewModel: FuelLogViewModel) {
         self.log = log
         self.viewModel = viewModel
+    }
+    
+    private var isLevelTracked: Bool {
+        viewModel.selectedVehicle?.isLevelTracked ?? true
+    }
+    
+    private var matchingInterval: FuelInterval? {
+        viewModel.currentFuelStats.intervals.first { $0.endEntryId == log.id }
     }
     
     public var body: some View {
@@ -358,6 +380,57 @@ public struct LogDetailView: View {
                 .frame(maxWidth: .infinity)
                 .modernCard(padding: 20)
                 
+                // Implausible Interval Warning or Exclusion Option (Level Tracked Only)
+                if isLevelTracked && (matchingInterval != nil || log.isExcluded) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if let interval = matchingInterval, interval.isImplausible {
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.headline)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Unusual Fuel Economy (\(settings.formatEfficiency(interval.economy)))")
+                                        .font(.subheadline)
+                                        .bold()
+                                        .foregroundColor(.orange)
+                                    Text("Calculated interval economy deviates by more than 40% from the vehicle baseline. You can exclude this interval from consumption averages.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(log.isExcluded ? "Interval Excluded from Averages" : "Include in Economy Calculations")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text(log.isExcluded ? "This interval is excluded from the headline gauge and trend charts." : "Toggle if this fill represents an anomaly.")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                Haptics.selection()
+                                viewModel.toggleLogExclusion(log)
+                            }) {
+                                Text(log.isExcluded ? "Include" : "Exclude")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(log.isExcluded ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                                    .foregroundColor(log.isExcluded ? .green : .orange)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .modernCard(padding: 14)
+                }
+                
                 // Metric Tiles
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                     DetailMetricTile(
@@ -397,12 +470,33 @@ public struct LogDetailView: View {
                         )
                     }
                     
-                    if let eff = viewModel.tripEfficiency(for: log) {
+                    if isLevelTracked {
+                        if let level = log.fuelLevelBefore {
+                            let tankCap = viewModel.selectedVehicle?.effectiveTankCapacity ?? 45.0
+                            let liters = level * tankCap
+                            DetailMetricTile(
+                                title: "Fuel Level Before",
+                                value: "\(Int(round(level * 100)))% (≈\(String(format: "%.1f", liters))L)",
+                                icon: "gauge.with.dots.needle.bottom.50percent",
+                                color: .cyan
+                            )
+                        }
+                        
+                        if let eff = viewModel.tripEfficiency(for: log) {
+                            DetailMetricTile(
+                                title: "Calculated \(settings.unitSystem.efficiencyUnit)",
+                                value: settings.formatEfficiency(eff),
+                                icon: "gauge.with.dots.needle.bottom.50percent",
+                                color: log.isExcluded ? .gray : .green
+                            )
+                        }
+                        
+                        let cond = TripCondition(rawValue: log.effectiveTripType) ?? .city
                         DetailMetricTile(
-                            title: "Calculated \(settings.unitSystem.efficiencyUnit)",
-                            value: settings.formatEfficiency(eff),
-                            icon: "gauge.with.dots.needle.bottom.50percent",
-                            color: .green
+                            title: "Trip Condition",
+                            value: cond.rawValue,
+                            icon: cond.iconName,
+                            color: cond.badgeColor
                         )
                     }
                     
@@ -411,14 +505,6 @@ public struct LogDetailView: View {
                         value: log.fuelGrade ?? "Petrol Octane 92",
                         icon: "drop.fill",
                         color: .teal
-                    )
-                    
-                    let cond = TripCondition(rawValue: log.effectiveTripType) ?? .city
-                    DetailMetricTile(
-                        title: "Trip Condition",
-                        value: cond.rawValue,
-                        icon: cond.iconName,
-                        color: cond.badgeColor
                     )
                 }
                 

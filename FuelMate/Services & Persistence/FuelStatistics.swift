@@ -11,6 +11,8 @@ public struct FuelEntry: Identifiable, Equatable {
     public let tripType: String // "City", "Highway", "Mixed"
     public let stationName: String
     public let fuelGrade: String
+    public let fuelLevelBefore: Double?
+    public let isExcluded: Bool
     
     public init(
         id: UUID = UUID(),
@@ -21,7 +23,9 @@ public struct FuelEntry: Identifiable, Equatable {
         isFullTank: Bool = true,
         tripType: String = "City",
         stationName: String = "",
-        fuelGrade: String = ""
+        fuelGrade: String = "",
+        fuelLevelBefore: Double? = nil,
+        isExcluded: Bool = false
     ) {
         self.id = id
         self.date = date
@@ -32,6 +36,8 @@ public struct FuelEntry: Identifiable, Equatable {
         self.tripType = tripType
         self.stationName = stationName
         self.fuelGrade = fuelGrade
+        self.fuelLevelBefore = fuelLevelBefore
+        self.isExcluded = isExcluded
     }
     
     public var unitPrice: Decimal {
@@ -40,7 +46,7 @@ public struct FuelEntry: Identifiable, Equatable {
     }
 }
 
-// MARK: - Full-Tank Interval Computation Result
+// MARK: - Full-Tank / Level-Tracked Interval Computation Result
 public struct FuelInterval: Identifiable, Equatable {
     public var id: UUID { endEntryId }
     public let startEntryId: UUID
@@ -50,11 +56,16 @@ public struct FuelInterval: Identifiable, Equatable {
     public let startOdometer: Double
     public let endOdometer: Double
     public let distance: Double
-    public let consumedVolume: Double // Sum of partial fills in between + final full tank
+    public let consumedVolume: Double // Fuel used in liters
     public let totalCost: Decimal
     public let economy: Double // distance / consumedVolume (km/L)
     public let tripType: String
     public let stationName: String
+    public let isImplausible: Bool
+    public let isExcluded: Bool
+    public let fuelLevelBeforeA: Double?
+    public let fuelLevelAfterA: Double?
+    public let fuelLevelBeforeB: Double?
     
     public init(
         startEntryId: UUID,
@@ -68,7 +79,12 @@ public struct FuelInterval: Identifiable, Equatable {
         totalCost: Decimal,
         economy: Double,
         tripType: String,
-        stationName: String
+        stationName: String,
+        isImplausible: Bool = false,
+        isExcluded: Bool = false,
+        fuelLevelBeforeA: Double? = nil,
+        fuelLevelAfterA: Double? = nil,
+        fuelLevelBeforeB: Double? = nil
     ) {
         self.startEntryId = startEntryId
         self.endEntryId = endEntryId
@@ -82,6 +98,11 @@ public struct FuelInterval: Identifiable, Equatable {
         self.economy = economy
         self.tripType = tripType
         self.stationName = stationName
+        self.isImplausible = isImplausible
+        self.isExcluded = isExcluded
+        self.fuelLevelBeforeA = fuelLevelBeforeA
+        self.fuelLevelAfterA = fuelLevelAfterA
+        self.fuelLevelBeforeB = fuelLevelBeforeB
     }
 }
 
@@ -130,7 +151,7 @@ public struct FuelStatistics: Equatable {
     public let totalDistance: Double
     public let totalVolume: Double
     public let totalSpent: Decimal
-    public let averageEconomy: Double? // Nil if fewer than 2 full-tank fills exist
+    public let averageEconomy: Double? // Headline rolling average of last 3-5 valid intervals (Nil if no valid intervals exist or if expenses-only)
     public let costPerKm: Decimal?
     public let averageFuelPrice: Decimal?
     public let intervals: [FuelInterval]
@@ -138,6 +159,9 @@ public struct FuelStatistics: Equatable {
     public let worstEconomy: Double?
     public let fullTankFillCount: Int
     public let totalFillCount: Int
+    public let rollingIntervalCount: Int
+    public let rollingAverageEconomy: Double?
+    public let trackingMode: FuelTrackingMode
     
     public init(
         totalDistance: Double,
@@ -150,7 +174,10 @@ public struct FuelStatistics: Equatable {
         bestEconomy: Double?,
         worstEconomy: Double?,
         fullTankFillCount: Int,
-        totalFillCount: Int
+        totalFillCount: Int,
+        rollingIntervalCount: Int = 0,
+        rollingAverageEconomy: Double? = nil,
+        trackingMode: FuelTrackingMode = .levelTracked
     ) {
         self.totalDistance = totalDistance
         self.totalVolume = totalVolume
@@ -163,6 +190,9 @@ public struct FuelStatistics: Equatable {
         self.worstEconomy = worstEconomy
         self.fullTankFillCount = fullTankFillCount
         self.totalFillCount = totalFillCount
+        self.rollingIntervalCount = rollingIntervalCount
+        self.rollingAverageEconomy = rollingAverageEconomy
+        self.trackingMode = trackingMode
     }
     
     // MARK: - Factory Calculation Method
@@ -170,7 +200,9 @@ public struct FuelStatistics: Equatable {
         entries: [FuelEntry],
         initialOdometer: Double = 0.0,
         cityTarget: Double = 10.0,
-        highwayTarget: Double = 15.0
+        highwayTarget: Double = 15.0,
+        tankCapacity: Double = 45.0,
+        trackingMode: FuelTrackingMode = .levelTracked
     ) -> FuelStatistics {
         guard !entries.isEmpty else {
             return FuelStatistics(
@@ -184,7 +216,10 @@ public struct FuelStatistics: Equatable {
                 bestEconomy: nil,
                 worstEconomy: nil,
                 fullTankFillCount: 0,
-                totalFillCount: 0
+                totalFillCount: 0,
+                rollingIntervalCount: 0,
+                rollingAverageEconomy: nil,
+                trackingMode: trackingMode
             )
         }
         
@@ -229,37 +264,52 @@ public struct FuelStatistics: Equatable {
             avgPrice = nil
         }
         
-        // Full-Tank Intervals Calculation
-        let calculatedIntervals = computeFullTankIntervals(from: sorted)
         let fullTankFills = sorted.filter { $0.isFullTank }.count
         
-        // Average economy across full-tank spans
-        let avgEconomy: Double?
-        if let firstFull = sorted.first(where: { $0.isFullTank }),
-           let lastFull = sorted.last(where: { $0.isFullTank }),
-           firstFull.id != lastFull.id,
-           lastFull.odometer > firstFull.odometer {
-            // Find all entries strictly after firstFull up to and including lastFull
-            if let firstIdx = sorted.firstIndex(where: { $0.id == firstFull.id }),
-               let lastIdx = sorted.firstIndex(where: { $0.id == lastFull.id }),
-               firstIdx < lastIdx {
-                let rangeEntries = sorted[(firstIdx + 1)...lastIdx]
-                let spanVolume = rangeEntries.reduce(0.0) { $0 + max(0.0, $1.volume) }
-                let spanDistance = lastFull.odometer - firstFull.odometer
-                if spanVolume > 0 && spanDistance > 0 {
-                    let eco = spanDistance / spanVolume
-                    avgEconomy = eco.isFinite && eco > 0 ? eco : nil
-                } else {
-                    avgEconomy = nil
-                }
-            } else {
-                avgEconomy = nil
-            }
-        } else {
-            avgEconomy = nil
+        // Option 2: Expenses Only -> returns no economy values at all
+        if trackingMode == .expensesOnly {
+            return FuelStatistics(
+                totalDistance: totalDist,
+                totalVolume: totalVol,
+                totalSpent: totalCost,
+                averageEconomy: nil,
+                costPerKm: costKm,
+                averageFuelPrice: avgPrice,
+                intervals: [],
+                bestEconomy: nil,
+                worstEconomy: nil,
+                fullTankFillCount: fullTankFills,
+                totalFillCount: sorted.count,
+                rollingIntervalCount: 0,
+                rollingAverageEconomy: nil,
+                trackingMode: .expensesOnly
+            )
         }
         
-        let validEconomies = calculatedIntervals.map { $0.economy }
+        // Option 1: Level Tracked Mode
+        let calculatedIntervals = computeLevelTrackedIntervals(
+            from: sorted,
+            tankCapacity: tankCapacity,
+            cityTarget: cityTarget,
+            highwayTarget: highwayTarget
+        )
+        
+        let validIntervals = calculatedIntervals.filter { !$0.isExcluded }
+        let rollingAvg: Double?
+        let rollingCount: Int
+        
+        if validIntervals.isEmpty {
+            rollingAvg = nil
+            rollingCount = 0
+        } else {
+            // Rolling average of the last 3-5 valid intervals (or all available if 1 or 2)
+            let sampleCount = min(5, validIntervals.count)
+            let sample = Array(validIntervals.suffix(sampleCount))
+            rollingCount = sampleCount
+            rollingAvg = sample.reduce(0.0) { $0 + $1.economy } / Double(sampleCount)
+        }
+        
+        let validEconomies = validIntervals.map { $0.economy }
         let best = validEconomies.max()
         let worst = validEconomies.min()
         
@@ -267,19 +317,97 @@ public struct FuelStatistics: Equatable {
             totalDistance: totalDist,
             totalVolume: totalVol,
             totalSpent: totalCost,
-            averageEconomy: avgEconomy,
+            averageEconomy: rollingAvg,
             costPerKm: costKm,
             averageFuelPrice: avgPrice,
             intervals: calculatedIntervals,
             bestEconomy: best,
             worstEconomy: worst,
             fullTankFillCount: fullTankFills,
-            totalFillCount: sorted.count
+            totalFillCount: sorted.count,
+            rollingIntervalCount: rollingCount,
+            rollingAverageEconomy: rollingAvg,
+            trackingMode: .levelTracked
         )
     }
     
-    // MARK: - Full-Tank Interval Computation
-    /// Calculates economy only between consecutive full-tank fills, summing any partial fills in between.
+    // MARK: - Level-Tracked Interval Computation
+    public static func computeLevelTrackedIntervals(
+        from sortedEntries: [FuelEntry],
+        tankCapacity: Double,
+        cityTarget: Double,
+        highwayTarget: Double
+    ) -> [FuelInterval] {
+        guard tankCapacity > 0, sortedEntries.count >= 2 else { return [] }
+        var intervals: [FuelInterval] = []
+        
+        for i in 0..<(sortedEntries.count - 1) {
+            let entryA = sortedEntries[i]
+            let entryB = sortedEntries[i + 1]
+            
+            // Skip intervals where either log lacks a level value
+            guard let levelBeforeA = entryA.fuelLevelBefore,
+                  let levelBeforeB = entryB.fuelLevelBefore else {
+                continue
+            }
+            
+            // Level after refuel A = 100% if marked full, otherwise min(1.0, levelBefore + volume / tankCapacity)
+            let levelAfterA: Double
+            if entryA.isFullTank {
+                levelAfterA = 1.0
+            } else {
+                levelAfterA = min(1.0, levelBeforeA + (max(0.0, entryA.volume) / tankCapacity))
+            }
+            
+            // Fuel used between log A and next log B = (levelAfter(A) - levelBefore(B)) * tankCapacity
+            let fuelUsed = (levelAfterA - levelBeforeB) * tankCapacity
+            let distance = entryB.odometer - entryA.odometer
+            
+            // Skip intervals where fuelUsed <= 0, distance <= 0. Never divide by zero.
+            guard distance > 0, fuelUsed > 0 else { continue }
+            
+            let economy = distance / fuelUsed
+            guard economy.isFinite, economy > 0 else { continue }
+            
+            // Plausibility check: flag if economy is more than 40% away from vehicle baseline
+            let baseline: Double
+            switch entryB.tripType.lowercased() {
+            case "city":
+                baseline = max(0.1, cityTarget)
+            case "highway":
+                baseline = max(0.1, highwayTarget)
+            default:
+                baseline = max(0.1, (cityTarget + highwayTarget) / 2.0)
+            }
+            let deviation = abs(economy - baseline) / baseline
+            let isImplausible = deviation > 0.40
+            let isExcluded = entryB.isExcluded
+            
+            intervals.append(FuelInterval(
+                startEntryId: entryA.id,
+                endEntryId: entryB.id,
+                startDate: entryA.date,
+                endDate: entryB.date,
+                startOdometer: entryA.odometer,
+                endOdometer: entryB.odometer,
+                distance: distance,
+                consumedVolume: fuelUsed,
+                totalCost: entryB.totalCost,
+                economy: economy,
+                tripType: entryB.tripType,
+                stationName: entryB.stationName,
+                isImplausible: isImplausible,
+                isExcluded: isExcluded,
+                fuelLevelBeforeA: levelBeforeA,
+                fuelLevelAfterA: levelAfterA,
+                fuelLevelBeforeB: levelBeforeB
+            ))
+        }
+        
+        return intervals
+    }
+    
+    // MARK: - Legacy Full-Tank Interval Computation (Preserved for compatibility)
     public static func computeFullTankIntervals(from sortedEntries: [FuelEntry]) -> [FuelInterval] {
         var intervals: [FuelInterval] = []
         var lastFullTankEntry: FuelEntry? = nil
@@ -312,14 +440,12 @@ public struct FuelStatistics: Equatable {
                             ))
                         }
                     }
-                    // Reset accumulator for next interval
                     lastFullTankEntry = entry
                     accumulatedVolume = 0.0
                     accumulatedCost = .zero
                 }
             } else {
                 if entry.isFullTank {
-                    // First full tank anchor established
                     lastFullTankEntry = entry
                     accumulatedVolume = 0.0
                     accumulatedCost = .zero
@@ -385,17 +511,31 @@ public struct FuelStatistics: Equatable {
         enteredOdometer: Double,
         previousOdometer: Double?,
         baselineEconomy: Double,
-        estimatedEconomy: Double?
+        estimatedEconomy: Double?,
+        remainingFuelPercent: Double? = nil
     ) -> [SanityWarning] {
         var warnings: [SanityWarning] = []
         
-        // 1. Volume exceeds tank size
-        if tankCapacity > 0 && enteredVolume > tankCapacity {
-            let excess = enteredVolume - tankCapacity
-            warnings.append(SanityWarning(
-                type: .volumeExceedsTank,
-                message: String(format: "Entered volume (%.1f L) exceeds your vehicle's configured tank capacity (%.0f L) by %.1f L.", enteredVolume, tankCapacity, excess)
-            ))
+        // 1. Volume + remaining level exceeds tank size by > 5%
+        if tankCapacity > 0 {
+            if let level = remainingFuelPercent {
+                let remainingLiters = level * tankCapacity
+                let totalFuel = enteredVolume + remainingLiters
+                if totalFuel > (tankCapacity * 1.05) {
+                    let excess = totalFuel - tankCapacity
+                    let excessPercent = Int(round(((totalFuel - tankCapacity) / tankCapacity) * 100))
+                    warnings.append(SanityWarning(
+                        type: .volumeExceedsTank,
+                        message: String(format: "Total fuel (%.1f L volume + %.1f L remaining = %.1f L) exceeds tank capacity (%.0f L) by %.1f L (%d%%).", enteredVolume, remainingLiters, totalFuel, tankCapacity, excess, excessPercent)
+                    ))
+                }
+            } else if enteredVolume > tankCapacity {
+                let excess = enteredVolume - tankCapacity
+                warnings.append(SanityWarning(
+                    type: .volumeExceedsTank,
+                    message: String(format: "Entered volume (%.1f L) exceeds your vehicle's configured tank capacity (%.0f L) by %.1f L.", enteredVolume, tankCapacity, excess)
+                ))
+            }
         }
         
         // 2. Odometer jump above threshold (>1,500 km in a single fill-up)

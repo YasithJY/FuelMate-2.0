@@ -28,6 +28,10 @@ public struct AnalyticsView: View {
         })
     }
     
+    private var isLevelTracked: Bool {
+        viewModel.selectedVehicle?.isLevelTracked ?? true
+    }
+    
     public var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -46,14 +50,18 @@ public struct AnalyticsView: View {
                         ContentUnavailableView(
                             "Not Enough Data for Trends",
                             systemImage: "chart.xyaxis.line",
-                            description: Text("Add at least 2 fill-up logs for \(viewModel.selectedVehicle?.name ?? "this vehicle") to generate Catmull-Rom fuel economy splines and expense charts.")
+                            description: Text(isLevelTracked
+                                ? "Add at least 2 fill-up logs for \(viewModel.selectedVehicle?.name ?? "this vehicle") to generate fuel economy splines and expense charts."
+                                : "Add at least 2 fill-up logs for \(viewModel.selectedVehicle?.name ?? "this vehicle") to generate expense charts.")
                         )
                         .padding(.top, 40)
                     } else {
-                        // Chart 1: Catmull-Rom Fuel Economy Spline
-                        economySplineCard
+                        // Chart 1: Catmull-Rom Fuel Economy Spline (Level-Tracked Only)
+                        if isLevelTracked {
+                            economySplineCard
+                        }
                         
-                        // Chart 2: Monthly Expense Bar Chart
+                        // Chart 2: Monthly Expense Bar Chart (All Vehicles)
                         monthlyExpenseCard
                         
                         // Vehicle Highlights Grid
@@ -76,6 +84,7 @@ public struct AnalyticsView: View {
                                 }) {
                                     HStack {
                                         Text(vehicle.displayName)
+                                        Text(vehicle.isLevelTracked ? "(Consumption)" : "(Expenses only)")
                                         if viewModel.selectedVehicle?.id == vehicle.id {
                                             Image(systemName: "checkmark")
                                         }
@@ -249,24 +258,26 @@ public struct AnalyticsView: View {
                 .font(.headline)
             
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                if let best = viewModel.bestTripEfficiency {
-                    InsightCard(
-                        title: "Peak Economy",
-                        value: settings.formatEfficiency(best),
-                        subtitle: "Best recorded run",
-                        icon: "arrow.up.circle.fill",
-                        color: .green
-                    )
-                }
-                
-                if let worst = viewModel.worstTripEfficiency {
-                    InsightCard(
-                        title: "Lowest Economy",
-                        value: settings.formatEfficiency(worst),
-                        subtitle: "Lowest recorded run",
-                        icon: "arrow.down.circle.fill",
-                        color: .orange
-                    )
+                if isLevelTracked {
+                    if let best = viewModel.bestTripEfficiency {
+                        InsightCard(
+                            title: "Peak Economy",
+                            value: settings.formatEfficiency(best),
+                            subtitle: "Best recorded run",
+                            icon: "arrow.up.circle.fill",
+                            color: .green
+                        )
+                    }
+                    
+                    if let worst = viewModel.worstTripEfficiency {
+                        InsightCard(
+                            title: "Lowest Economy",
+                            value: settings.formatEfficiency(worst),
+                            subtitle: "Lowest recorded run",
+                            icon: "arrow.down.circle.fill",
+                            color: .orange
+                        )
+                    }
                 }
                 
                 let avgCost = viewModel.logs.isEmpty ? 0.0 : (viewModel.totalSpent / Double(viewModel.logs.count))

@@ -150,7 +150,7 @@ public final class UnitSettings: ObservableObject {
     
     // MARK: - RFC-4180 Compliant CSV Export
     public func exportCSV(logs: [FuelLog], vehicleName: String? = nil) -> String {
-        var csv = "Vehicle,ID,Date,Station,Locality,Odometer (\(unitSystem.distanceUnit)),Volume (\(unitSystem.volumeUnit)),Total Cost (\(currencySymbol)),Unit Price,Fuel Grade,Full Tank,Latitude,Longitude,Notes\r\n"
+        var csv = "Vehicle,ID,Date,Station,Locality,Odometer (\(unitSystem.distanceUnit)),Volume (\(unitSystem.volumeUnit)),Total Cost (\(currencySymbol)),Unit Price,Fuel Grade,Full Tank,fuel_level_before_percent,Latitude,Longitude,Notes\r\n"
         
         let isoFormatter = ISO8601DateFormatter()
         let posixNumberFormatter = NumberFormatter()
@@ -174,11 +174,19 @@ public final class UnitSettings: ObservableObject {
             let unitPrice = posixNumberFormatter.string(from: NSDecimalNumber(decimal: max(.zero, log.unitPriceDecimal))) ?? String(format: "%.2f", log.unitPrice)
             let grade = escapeCSVField(log.fuelGrade ?? "Petrol 92 Octane")
             let fullTank = log.isFullTank ? "YES" : "NO"
+            
+            let fuelLevelBefore: String
+            if (log.vehicle?.isLevelTracked ?? true), let level = log.fuelLevelBefore {
+                fuelLevelBefore = String(format: "%.1f%%", level * 100.0)
+            } else {
+                fuelLevelBefore = ""
+            }
+            
             let lat = String(format: "%.6f", log.latitude)
             let lon = String(format: "%.6f", log.longitude)
             let notes = escapeCSVField(log.notes ?? "")
             
-            let row = "\(vehicle),\(id),\(date),\(station),\(locality),\(odometer),\(volume),\(totalCost),\(unitPrice),\(grade),\(fullTank),\(lat),\(lon),\(notes)\r\n"
+            let row = "\(vehicle),\(id),\(date),\(station),\(locality),\(odometer),\(volume),\(totalCost),\(unitPrice),\(grade),\(fullTank),\(fuelLevelBefore),\(lat),\(lon),\(notes)\r\n"
             csv.append(row)
         }
         return csv

@@ -21,6 +21,10 @@ public struct DashboardView: View {
         horizontalSizeClass == .regular
     }
     
+    private var isLevelTracked: Bool {
+        viewModel.selectedVehicle?.isLevelTracked ?? true
+    }
+    
     public var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -34,20 +38,31 @@ public struct DashboardView: View {
                     // MARK: - Responsive Main Content
                     if isRegularWidth {
                         HStack(alignment: .top, spacing: 20) {
-                            efficiencyGaugeCard
-                                .frame(maxWidth: 420)
+                            if isLevelTracked {
+                                efficiencyGaugeCard
+                                    .frame(maxWidth: 420)
+                            } else {
+                                expensesOnlyNoticeCard
+                                    .frame(maxWidth: 420)
+                            }
                             
                             VStack(spacing: 16) {
                                 kpiGridSection
-                                if viewModel.efficiencyTrend.count > 1 {
+                                if isLevelTracked && viewModel.efficiencyTrend.count > 1 {
                                     sparklineChartSection
                                 }
                             }
                         }
                     } else {
-                        efficiencyGaugeCard
+                        if isLevelTracked {
+                            efficiencyGaugeCard
+                        } else {
+                            expensesOnlyNoticeCard
+                        }
+                        
                         kpiGridSection
-                        if viewModel.efficiencyTrend.count > 1 {
+                        
+                        if isLevelTracked && viewModel.efficiencyTrend.count > 1 {
                             sparklineChartSection
                         }
                     }
@@ -77,6 +92,7 @@ public struct DashboardView: View {
                                 }) {
                                     HStack {
                                         Text(vehicle.displayName)
+                                        Text(vehicle.isLevelTracked ? "(Consumption)" : "(Expenses only)")
                                         if viewModel.selectedVehicle?.id == vehicle.id {
                                             Image(systemName: "checkmark")
                                         }
@@ -99,6 +115,17 @@ public struct DashboardView: View {
                             Text(viewModel.selectedVehicle?.name ?? "Select Vehicle")
                                 .font(.headline)
                                 .foregroundColor(.primary)
+                            
+                            if let vehicle = viewModel.selectedVehicle {
+                                Text(vehicle.isLevelTracked ? "Consumption" : "Expenses only")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(vehicle.isLevelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.15) : Color.secondary.opacity(0.15))
+                                    .foregroundColor(vehicle.isLevelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83) : .secondary)
+                                    .clipShape(Capsule())
+                            }
+                            
                             Image(systemName: "chevron.down.circle.fill")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
@@ -188,13 +215,23 @@ public struct DashboardView: View {
                                     .foregroundColor(.secondary)
                             }
                             
-                            Text("•")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            Text("Targets: \(String(format: "%.0f", vehicle.effectiveCityConsumption))/\(String(format: "%.0f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            if vehicle.isLevelTracked {
+                                Text("•")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("Targets: \(String(format: "%.0f", vehicle.effectiveCityConsumption))/\(String(format: "%.0f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("•")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("Expenses only")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     } else {
                         Text("No Vehicle Added")
@@ -221,7 +258,7 @@ public struct DashboardView: View {
                     .background(AppTheme.primaryGradient)
                     .foregroundColor(.white)
                     .clipShape(Capsule())
-                } else if viewModel.hasEnoughFullTankData, let avg = viewModel.currentFuelStats.averageEconomy {
+                } else if viewModel.selectedVehicle?.isLevelTracked == true && viewModel.hasEnoughFullTankData, let avg = viewModel.currentFuelStats.averageEconomy {
                     let cityTarget = viewModel.selectedVehicle?.effectiveCityConsumption ?? 10.0
                     let ratio = avg / max(cityTarget, 1.0)
                     HStack(spacing: 4) {
@@ -244,6 +281,30 @@ public struct DashboardView: View {
             .modernCard(padding: 12)
         }
         .buttonStyle(.plain)
+    }
+    
+    // MARK: - Expenses Only Replacement Notice Card
+    private var expensesOnlyNoticeCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Image(systemName: "info.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(Color(red: 0.0, green: 0.72, blue: 0.83))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Fuel consumption isn't available for this vehicle. Showing expenses only.")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    Text("Total spent, distance, fuel prices, and cost per \(settings.unitSystem.distanceUnit) continue to be tracked.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modernCard(padding: 16)
     }
     
     // MARK: - Quick Action Bar
@@ -379,6 +440,13 @@ public struct DashboardView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.secondary)
                         
+                        let rollingCount = viewModel.currentFuelStats.rollingIntervalCount
+                        if rollingCount > 0 {
+                            Text("Based on \(rollingCount) \(rollingCount == 1 ? "interval" : "intervals")")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        
                         // Performance Tag vs Baselines
                         if benchmark.status == .aboveHighway {
                             Text("Above Highway Target")
@@ -409,7 +477,7 @@ public struct DashboardView: View {
                                 .padding(.top, 2)
                         }
                     } else {
-                        // Graceful "Not enough data" State until 2 full tanks exist
+                        // Graceful "Not enough data" State until at least one valid interval exists
                         Image(systemName: "fuelpump.circle")
                             .font(.system(size: 32))
                             .foregroundColor(.secondary)
@@ -419,9 +487,11 @@ public struct DashboardView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Text("Record 2+ full-tank fills")
+                        Text("Add fuel level on your next refuel to see consumption.")
                             .font(.caption2)
                             .foregroundColor(.secondary.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
                     }
                 }
             }
@@ -714,14 +784,16 @@ public struct RecentLogCard: View {
                         .font(.system(.subheadline, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
-                    Text(condition.rawValue)
-                        .font(.system(size: 9, weight: .bold))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(condition.badgeColor.opacity(0.15))
-                        .foregroundColor(condition.badgeColor)
-                        .clipShape(Capsule())
+                    if viewModel.selectedVehicle?.isLevelTracked == true {
+                        let condition = TripCondition(rawValue: log.effectiveTripType) ?? .city
+                        Text(condition.rawValue)
+                            .font(.system(size: 9, weight: .bold))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(condition.badgeColor.opacity(0.15))
+                            .foregroundColor(condition.badgeColor)
+                            .clipShape(Capsule())
+                    }
                 }
                 
                 HStack(spacing: 6) {
@@ -752,7 +824,7 @@ public struct RecentLogCard: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    if let eff = viewModel.tripEfficiency(for: log) {
+                    if viewModel.selectedVehicle?.isLevelTracked == true, let eff = viewModel.tripEfficiency(for: log) {
                         Text("•")
                             .font(.caption2)
                             .foregroundColor(.secondary)

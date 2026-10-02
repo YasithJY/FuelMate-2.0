@@ -21,6 +21,7 @@ public struct AddLogView: View {
     @State private var fuelGrade: String = "Petrol Octane 92"
     @State private var tripType: String = "City"
     @State private var isFullTank: Bool = true
+    @State private var fuelRemainingPercent: Double = 0.25
     @State private var date: Date = Date()
     @State private var notes: String = ""
     @State private var latitude: Double = 0.0
@@ -78,6 +79,10 @@ public struct AddLogView: View {
         Decimal(priceManager.getPrice(for: fuelGrade))
     }
     
+    private var isVehicleLevelTracked: Bool {
+        viewModel.selectedVehicle?.isLevelTracked ?? true
+    }
+    
     // Non-blocking Data Sanity Warnings
     private var sanityWarnings: [SanityWarning] {
         guard let vehicle = viewModel.selectedVehicle else { return [] }
@@ -95,11 +100,12 @@ public struct AddLogView: View {
         
         return FuelStatistics.validateSanity(
             enteredVolume: vol,
-            tankCapacity: vehicle.tankCapacity,
+            tankCapacity: vehicle.effectiveTankCapacity,
             enteredOdometer: odo,
             previousOdometer: previousOdometer,
             baselineEconomy: baseline,
-            estimatedEconomy: calculatedTripEfficiency
+            estimatedEconomy: calculatedTripEfficiency,
+            remainingFuelPercent: isVehicleLevelTracked ? fuelRemainingPercent : nil
         )
     }
     
@@ -145,12 +151,18 @@ public struct AddLogView: View {
         return nil
     }
     
+    private var isFuelLevelValid: Bool {
+        if !isVehicleLevelTracked { return true }
+        return fuelRemainingPercent >= 0.0 && fuelRemainingPercent <= 1.0 && !fuelRemainingPercent.isNaN
+    }
+    
     private var isFormValid: Bool {
         guard viewModel.selectedVehicle != nil else { return false }
         guard let odo = parsedOdometer, odo > 0,
               let vol = parsedVolume, vol > 0,
               let cost = parsedTotalCost, cost > 0,
-              !isOdometerRegressed else {
+              !isOdometerRegressed,
+              isFuelLevelValid else {
             return false
         }
         return true
@@ -221,48 +233,118 @@ public struct AddLogView: View {
                     }
                 }
                 
-                // MARK: - Section 1: Trip Type Driving Condition
-                Section(
-                    header: Text("Trip Driving Condition"),
-                    footer: Text("Categorize driving for this fuel load to benchmark against your City or Highway consumption targets.")
-                ) {
-                    Picker("Trip Type", selection: $tripType) {
-                        ForEach(TripCondition.allCases) { condition in
-                            Text(condition.rawValue).tag(condition.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    HStack {
-                        let condition = TripCondition(rawValue: tripType) ?? .city
-                        Image(systemName: condition.iconName)
-                            .foregroundColor(condition.badgeColor)
-                        
-                        Text("Active Benchmark:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        if let vehicle = viewModel.selectedVehicle {
-                            if condition == .city {
-                                Text("City Target: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) km/L")
-                                    .font(.caption)
-                                    .bold()
-                                    .foregroundColor(.orange)
-                            } else if condition == .highway {
-                                Text("Highway Target: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) km/L")
-                                    .font(.caption)
-                                    .bold()
-                                    .foregroundColor(.green)
-                            } else {
-                                let mixed = (vehicle.effectiveCityConsumption + vehicle.effectiveHighwayConsumption) / 2.0
-                                Text("Mixed Benchmark: \(String(format: "%.1f", mixed)) km/L")
-                                    .font(.caption)
-                                    .bold()
-                                    .foregroundColor(.blue)
+                // MARK: - Section 1: Trip Type Driving Condition (Level Tracked Only)
+                if isVehicleLevelTracked {
+                    Section(
+                        header: Text("Trip Driving Condition"),
+                        footer: Text("Categorize driving for this fuel load to benchmark against your City or Highway consumption targets.")
+                    ) {
+                        Picker("Trip Type", selection: $tripType) {
+                            ForEach(TripCondition.allCases) { condition in
+                                Text(condition.rawValue).tag(condition.rawValue)
                             }
                         }
+                        .pickerStyle(.segmented)
+                        
+                        HStack {
+                            let condition = TripCondition(rawValue: tripType) ?? .city
+                            Image(systemName: condition.iconName)
+                                .foregroundColor(condition.badgeColor)
+                            
+                            Text("Active Benchmark:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            if let vehicle = viewModel.selectedVehicle {
+                                if condition == .city {
+                                    Text("City Target: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) km/L")
+                                        .font(.caption)
+                                        .bold()
+                                        .foregroundColor(.orange)
+                                } else if condition == .highway {
+                                    Text("Highway Target: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) km/L")
+                                        .font(.caption)
+                                        .bold()
+                                        .foregroundColor(.green)
+                                } else {
+                                    let mixed = (vehicle.effectiveCityConsumption + vehicle.effectiveHighwayConsumption) / 2.0
+                                    Text("Mixed Benchmark: \(String(format: "%.1f", mixed)) km/L")
+                                        .font(.caption)
+                                        .bold()
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                    }
+                    
+                    // MARK: - Section: Fuel Remaining Before Refuel (Required for Level Tracked)
+                    Section(
+                        header: Text("Fuel Remaining Before Refuel"),
+                        footer: Text("Set the fuel level before this refill (0-100%, 5% steps). Used for interval consumption math.")
+                    ) {
+                        VStack(spacing: 12) {
+                            HStack {
+                                Label("Fuel Remaining", systemImage: "gauge.with.dots.needle.bottom.50percent")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Spacer()
+                                Text("\(Int(round(fuelRemainingPercent * 100)))%")
+                                    .font(.headline)
+                                    .foregroundColor(Color(red: 0.0, green: 0.72, blue: 0.83))
+                                
+                                Stepper("", value: $fuelRemainingPercent, in: 0.0...1.0, step: 0.05)
+                                    .labelsHidden()
+                            }
+                            
+                            Slider(value: $fuelRemainingPercent, in: 0.0...1.0, step: 0.05)
+                                .tint(Color(red: 0.0, green: 0.72, blue: 0.83))
+                            
+                            // E / ¼ / ½ / ¾ / F tick labels
+                            HStack {
+                                Text("E")
+                                    .font(.caption2)
+                                    .fontWeight(fuelRemainingPercent == 0.0 ? .bold : .regular)
+                                    .foregroundColor(fuelRemainingPercent == 0.0 ? .red : .secondary)
+                                Spacer()
+                                Text("¼")
+                                    .font(.caption2)
+                                    .fontWeight(abs(fuelRemainingPercent - 0.25) < 0.01 ? .bold : .regular)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("½")
+                                    .font(.caption2)
+                                    .fontWeight(abs(fuelRemainingPercent - 0.50) < 0.01 ? .bold : .regular)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("¾")
+                                    .font(.caption2)
+                                    .fontWeight(abs(fuelRemainingPercent - 0.75) < 0.01 ? .bold : .regular)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("F")
+                                    .font(.caption2)
+                                    .fontWeight(fuelRemainingPercent == 1.0 ? .bold : .regular)
+                                    .foregroundColor(fuelRemainingPercent == 1.0 ? .green : .secondary)
+                            }
+                            .padding(.horizontal, 4)
+                            
+                            // Equivalent Liters readout
+                            let tankCap = viewModel.selectedVehicle?.effectiveTankCapacity ?? 45.0
+                            let equivLiters = fuelRemainingPercent * tankCap
+                            HStack(spacing: 6) {
+                                Image(systemName: "drop.fill")
+                                    .foregroundColor(.cyan)
+                                    .font(.caption2)
+                                Text(String(format: "≈ %.1f Liters (Tank capacity: %.0f L)", equivLiters, tankCap))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            .padding(.top, 2)
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
                 
@@ -359,8 +441,8 @@ public struct AddLogView: View {
                             }
                     }
                     
-                    // Live Efficiency Preview
-                    if let eff = calculatedTripEfficiency {
+                    // Live Efficiency Preview (Level Tracked Only)
+                    if isVehicleLevelTracked, let eff = calculatedTripEfficiency {
                         HStack {
                             Image(systemName: "gauge.with.dots.needle.bottom.50percent")
                                 .foregroundColor(.teal)
@@ -631,10 +713,11 @@ public struct AddLogView: View {
                 longitude: finalLon,
                 locality: finalLocality,
                 fuelGrade: fuelGrade,
-                tripType: tripType,
+                tripType: isVehicleLevelTracked ? tripType : "Mixed",
                 notes: notes,
                 isFullTank: isFullTank,
-                date: date
+                date: date,
+                fuelLevelBefore: isVehicleLevelTracked ? fuelRemainingPercent : nil
             )
             Haptics.success()
             dismiss()

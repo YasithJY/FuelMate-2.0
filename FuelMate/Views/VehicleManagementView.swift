@@ -147,6 +147,15 @@ private struct VehicleRowView: View {
                                 .foregroundColor(.green)
                                 .clipShape(Capsule())
                         }
+                        
+                        Text(vehicle.isLevelTracked ? "Consumption" : "Expenses only")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(vehicle.isLevelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.15) : Color.secondary.opacity(0.15))
+                            .foregroundColor(vehicle.isLevelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83) : .secondary)
+                            .clipShape(Capsule())
                     }
                     
                     HStack(spacing: 8) {
@@ -164,31 +173,38 @@ private struct VehicleRowView: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    // Dual Baselines Display
-                    HStack(spacing: 8) {
-                        HStack(spacing: 3) {
-                            Image(systemName: "building.2.crop.circle")
-                                .font(.caption2)
-                                .foregroundColor(.orange)
-                            Text("City: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                    if vehicle.isLevelTracked {
+                        // Dual Baselines Display
+                        HStack(spacing: 8) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "building.2.crop.circle")
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                                Text("City: \(String(format: "%.1f", vehicle.effectiveCityConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Text("•")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
+                            
+                            HStack(spacing: 3) {
+                                Image(systemName: "road.lanes")
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                                Text("Hwy: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        
-                        Text("•")
+                        .padding(.top, 2)
+                    } else {
+                        Text("Expenses Only Tracking")
                             .font(.caption2)
                             .foregroundColor(.secondary)
-                        
-                        HStack(spacing: 3) {
-                            Image(systemName: "road.lanes")
-                                .font(.caption2)
-                                .foregroundColor(.green)
-                            Text("Hwy: \(String(format: "%.1f", vehicle.effectiveHighwayConsumption)) \(settings.unitSystem.efficiencyUnit)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
+                            .padding(.top, 2)
                     }
-                    .padding(.top, 2)
                 }
                 
                 Spacer()
@@ -219,6 +235,7 @@ public struct VehicleEditorSheet: View {
     @ObservedObject public var viewModel: FuelLogViewModel
     public var vehicleToEdit: Vehicle? = nil
     
+    @State private var trackingMode: FuelTrackingMode = .levelTracked
     @State private var name: String = ""
     @State private var plateNumber: String = ""
     @State private var vehicleType: String = "Car"
@@ -226,23 +243,35 @@ public struct VehicleEditorSheet: View {
     @State private var initialOdometer: String = "0"
     @State private var cityFuelConsumption: String = "10.0"
     @State private var highwayFuelConsumption: String = "15.0"
+    @State private var showingModeChangeAlert: Bool = false
     
     public init(viewModel: FuelLogViewModel, vehicleToEdit: Vehicle? = nil) {
         self.viewModel = viewModel
         self.vehicleToEdit = vehicleToEdit
         
         if let v = vehicleToEdit {
+            _trackingMode = State(initialValue: v.trackingMode)
             _name = State(initialValue: v.name)
             _plateNumber = State(initialValue: v.plateNumber ?? "")
             _vehicleType = State(initialValue: v.vehicleType)
-            _tankCapacity = State(initialValue: String(format: "%.0f", v.tankCapacity))
+            _tankCapacity = State(initialValue: String(format: "%.0f", v.effectiveTankCapacity))
             _initialOdometer = State(initialValue: String(format: "%.0f", v.initialOdometer))
             _cityFuelConsumption = State(initialValue: String(format: "%.1f", v.effectiveCityConsumption))
             _highwayFuelConsumption = State(initialValue: String(format: "%.1f", v.effectiveHighwayConsumption))
         } else {
+            _trackingMode = State(initialValue: .levelTracked)
             _cityFuelConsumption = State(initialValue: "10.0")
             _highwayFuelConsumption = State(initialValue: "15.0")
         }
+    }
+    
+    private var parsedCapacity: Double? {
+        Double(tankCapacity.replacingOccurrences(of: ",", with: "."))
+    }
+    
+    private var isCapacityValid: Bool {
+        guard let val = parsedCapacity else { return false }
+        return val > 0 && !val.isNaN && !val.isInfinite
     }
     
     private var parsedCityFuel: Double? {
@@ -264,14 +293,100 @@ public struct VehicleEditorSheet: View {
     }
     
     private var isFormValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        isCityFuelValid &&
-        isHighwayFuelValid
+        let nameValid = !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if trackingMode == .levelTracked {
+            return nameValid && isCapacityValid && isCityFuelValid && isHighwayFuelValid
+        } else {
+            return nameValid
+        }
     }
     
     public var body: some View {
         NavigationStack {
             Form {
+                // Tracking Mode Choice
+                Section(
+                    header: Text("Tracking Mode"),
+                    footer: Text(trackingMode == .levelTracked
+                        ? "Fuel consumption, efficiency charts, and benchmarks will be calculated."
+                        : "Expenses only. Fuel consumption gauge and efficiency charts will be hidden.")
+                ) {
+                    VStack(spacing: 10) {
+                        // Card 1: Level Tracked
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                trackingMode = .levelTracked
+                            }
+                        } label: {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: trackingMode == .levelTracked ? "largecircle.fill.circle" : "circle")
+                                    .foregroundColor(trackingMode == .levelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83) : .secondary)
+                                    .font(.title3)
+                                    .padding(.top, 2)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("I can check remaining fuel level")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primary)
+                                    Text("Shows fuel consumption, gauge, and efficiency charts. Requires tank capacity and City/Highway baselines.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer()
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(trackingMode == .levelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.1) : Color(.secondarySystemGroupedBackground))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(trackingMode == .levelTracked ? Color(red: 0.0, green: 0.72, blue: 0.83) : Color.secondary.opacity(0.2), lineWidth: trackingMode == .levelTracked ? 1.5 : 0.5)
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Card 2: Expenses Only
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                trackingMode = .expensesOnly
+                            }
+                        } label: {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: trackingMode == .expensesOnly ? "largecircle.fill.circle" : "circle")
+                                    .foregroundColor(trackingMode == .expensesOnly ? Color(red: 0.0, green: 0.72, blue: 0.83) : .secondary)
+                                    .font(.title3)
+                                    .padding(.top, 2)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("I can't check remaining fuel level")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primary)
+                                    Text("Expenses only, no consumption. Shows total spent, fuel prices, and expense charts.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer()
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(trackingMode == .expensesOnly ? Color(red: 0.0, green: 0.72, blue: 0.83).opacity(0.1) : Color(.secondarySystemGroupedBackground))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(trackingMode == .expensesOnly ? Color(red: 0.0, green: 0.72, blue: 0.83) : Color.secondary.opacity(0.2), lineWidth: trackingMode == .expensesOnly ? 1.5 : 0.5)
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
+                }
+                
                 Section(header: Text("Vehicle Details")) {
                     TextField("Vehicle Name (e.g. Toyota Prius)", text: $name)
                     TextField("License Plate (e.g. WP CAB-2045)", text: $plateNumber)
@@ -287,58 +402,70 @@ public struct VehicleEditorSheet: View {
                     }
                 }
                 
-                Section(
-                    header: Text("Target Consumption Baselines"),
-                    footer: Text("Set your vehicle's expected fuel consumption. Both baselines must be strictly greater than 0 km/L.")
-                ) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Label("Target City Fuel Consumption (km/L)", systemImage: "building.2.crop.circle")
-                                .foregroundColor(.primary)
-                            Spacer()
-                            TextField("10.0", text: $cityFuelConsumption)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 80)
+                if trackingMode == .levelTracked {
+                    Section(
+                        header: Text("Target Consumption Baselines"),
+                        footer: Text("Set your vehicle's expected fuel consumption. Both baselines must be strictly greater than 0 km/L.")
+                    ) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Label("Target City Fuel Consumption (km/L)", systemImage: "building.2.crop.circle")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                TextField("10.0", text: $cityFuelConsumption)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(width: 80)
+                            }
+                            
+                            if !cityFuelConsumption.isEmpty && !isCityFuelValid {
+                                Text("Target City Fuel Consumption must be strictly greater than 0.")
+                                    .font(.caption)
+                                    .foregroundColor(AppTheme.errorColor)
+                            }
                         }
                         
-                        if !cityFuelConsumption.isEmpty && !isCityFuelValid {
-                            Text("Target City Fuel Consumption must be strictly greater than 0.")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.errorColor)
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Label("Target Highway Fuel Consumption (km/L)", systemImage: "road.lanes")
-                                .foregroundColor(.primary)
-                            Spacer()
-                            TextField("15.0", text: $highwayFuelConsumption)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 80)
-                        }
-                        
-                        if !highwayFuelConsumption.isEmpty && !isHighwayFuelValid {
-                            Text("Target Highway Fuel Consumption must be strictly greater than 0.")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.errorColor)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Label("Target Highway Fuel Consumption (km/L)", systemImage: "road.lanes")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                TextField("15.0", text: $highwayFuelConsumption)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(width: 80)
+                            }
+                            
+                            if !highwayFuelConsumption.isEmpty && !isHighwayFuelValid {
+                                Text("Target Highway Fuel Consumption must be strictly greater than 0.")
+                                    .font(.caption)
+                                    .foregroundColor(AppTheme.errorColor)
+                            }
                         }
                     }
                 }
                 
                 Section(
                     header: Text("Capacity & Mileage"),
-                    footer: Text("Initial odometer establishes the baseline distance for trip economy calculations.")
+                    footer: Text("Initial odometer establishes the baseline distance for trip calculations.")
                 ) {
-                    HStack {
-                        Text("Tank Capacity (Liters)")
-                        Spacer()
-                        TextField("45", text: $tankCapacity)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                    if trackingMode == .levelTracked {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("Tank Capacity (Liters)")
+                                Spacer()
+                                TextField("45", text: $tankCapacity)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(width: 80)
+                            }
+                            
+                            if !tankCapacity.isEmpty && !isCapacityValid {
+                                Text("Tank Capacity must be strictly greater than 0.")
+                                    .font(.caption)
+                                    .foregroundColor(AppTheme.errorColor)
+                            }
+                        }
                     }
                     
                     HStack {
@@ -363,7 +490,7 @@ public struct VehicleEditorSheet: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveVehicle()
+                        handleSaveTapped()
                     }
                     .bold()
                     .disabled(!isFormValid)
@@ -377,16 +504,38 @@ public struct VehicleEditorSheet: View {
                     .bold()
                 }
             }
+            .alert("Change Tracking Mode?", isPresented: $showingModeChangeAlert) {
+                Button("Confirm Change", role: .destructive) {
+                    doSaveVehicle()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                if trackingMode == .expensesOnly {
+                    Text("Switching to expenses only will hide the fuel economy gauge, sparkline, and efficiency charts. All existing fuel logs will be kept safely, and switching back restores consumption calculations.")
+                } else {
+                    Text("Switching to level tracking will show fuel consumption and efficiency charts once fuel levels are logged. Make sure tank capacity and baselines are set.")
+                }
+            }
         }
     }
     
-    private func saveVehicle() {
+    private func handleSaveTapped() {
         guard isFormValid else { return }
         
-        let capacity = Double(tankCapacity.replacingOccurrences(of: ",", with: ".")) ?? 45.0
+        if let existing = vehicleToEdit, existing.trackingMode != trackingMode {
+            showingModeChangeAlert = true
+        } else {
+            doSaveVehicle()
+        }
+    }
+    
+    private func doSaveVehicle() {
+        guard isFormValid else { return }
+        
+        let capacity = parsedCapacity ?? 45.0
         let odo = Double(initialOdometer.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-        let city = parsedCityFuel ?? 10.0
-        let highway = parsedHighwayFuel ?? 15.0
+        let city = parsedCityFuel ?? (vehicleToEdit?.effectiveCityConsumption ?? 10.0)
+        let highway = parsedHighwayFuel ?? (vehicleToEdit?.effectiveHighwayConsumption ?? 15.0)
         
         if let existing = vehicleToEdit {
             viewModel.updateVehicle(
@@ -397,7 +546,8 @@ public struct VehicleEditorSheet: View {
                 tankCapacity: capacity,
                 initialOdometer: odo,
                 cityFuelConsumption: city,
-                highwayFuelConsumption: highway
+                highwayFuelConsumption: highway,
+                fuelTrackingMode: trackingMode
             )
         } else {
             viewModel.addVehicle(
@@ -407,7 +557,8 @@ public struct VehicleEditorSheet: View {
                 tankCapacity: capacity,
                 initialOdometer: odo,
                 cityFuelConsumption: city,
-                highwayFuelConsumption: highway
+                highwayFuelConsumption: highway,
+                fuelTrackingMode: trackingMode
             )
         }
         Haptics.success()

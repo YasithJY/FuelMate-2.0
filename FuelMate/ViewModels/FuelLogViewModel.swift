@@ -131,7 +131,8 @@ public final class FuelLogViewModel: ObservableObject {
         tankCapacity: Double = 45.0,
         initialOdometer: Double = 0.0,
         cityFuelConsumption: Double = 10.0,
-        highwayFuelConsumption: Double = 15.0
+        highwayFuelConsumption: Double = 15.0,
+        fuelTrackingMode: FuelTrackingMode = .levelTracked
     ) -> Vehicle {
         let vehicle = Vehicle(context: context)
         vehicle.id = UUID()
@@ -139,9 +140,11 @@ public final class FuelLogViewModel: ObservableObject {
         vehicle.plateNumber = plateNumber?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? plateNumber?.trimmingCharacters(in: .whitespacesAndNewlines) : nil
         vehicle.vehicleType = vehicleType
         vehicle.tankCapacity = max(1.0, tankCapacity)
+        vehicle.tankCapacityLiters = NSNumber(value: max(1.0, tankCapacity))
         vehicle.initialOdometer = max(0.0, initialOdometer)
         vehicle.cityFuelConsumption = max(0.1, cityFuelConsumption)
         vehicle.highwayFuelConsumption = max(0.1, highwayFuelConsumption)
+        vehicle.trackingMode = fuelTrackingMode
         
         saveContext()
         fetchVehicles()
@@ -158,15 +161,20 @@ public final class FuelLogViewModel: ObservableObject {
         tankCapacity: Double,
         initialOdometer: Double,
         cityFuelConsumption: Double = 10.0,
-        highwayFuelConsumption: Double = 15.0
+        highwayFuelConsumption: Double = 15.0,
+        fuelTrackingMode: FuelTrackingMode? = nil
     ) {
         vehicle.name = name
         vehicle.plateNumber = plateNumber
         vehicle.vehicleType = vehicleType
         vehicle.tankCapacity = max(1.0, tankCapacity)
+        vehicle.tankCapacityLiters = NSNumber(value: max(1.0, tankCapacity))
         vehicle.initialOdometer = max(0.0, initialOdometer)
         vehicle.cityFuelConsumption = max(0.1, cityFuelConsumption)
         vehicle.highwayFuelConsumption = max(0.1, highwayFuelConsumption)
+        if let mode = fuelTrackingMode {
+            vehicle.trackingMode = mode
+        }
         saveContext()
         fetchVehicles()
     }
@@ -215,7 +223,8 @@ public final class FuelLogViewModel: ObservableObject {
         tripType: String = "City",
         notes: String = "",
         isFullTank: Bool = true,
-        date: Date = Date()
+        date: Date = Date(),
+        fuelLevelBefore: Double? = nil
     ) throws -> FuelLog {
         guard let currentVehicle = selectedVehicle else {
             throw FuelLogValidationError.noVehicleSelected
@@ -252,6 +261,7 @@ public final class FuelLogViewModel: ObservableObject {
         newLog.tripType = tripType.isEmpty ? "City" : tripType
         newLog.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines)
         newLog.isFullTank = isFullTank
+        newLog.fuelLevelBefore = fuelLevelBefore
         newLog.vehicle = currentVehicle
         
         saveContext()
@@ -273,7 +283,8 @@ public final class FuelLogViewModel: ObservableObject {
         tripType: String = "City",
         notes: String = "",
         isFullTank: Bool = true,
-        date: Date = Date()
+        date: Date = Date(),
+        fuelLevelBefore: Double? = nil
     ) throws -> FuelLog {
         guard !totalCost.isNaN && !totalCost.isInfinite && totalCost > 0 else {
             throw FuelLogValidationError.invalidTotalCost
@@ -290,8 +301,15 @@ public final class FuelLogViewModel: ObservableObject {
             tripType: tripType,
             notes: notes,
             isFullTank: isFullTank,
-            date: date
+            date: date,
+            fuelLevelBefore: fuelLevelBefore
         )
+    }
+    
+    public func toggleLogExclusion(_ log: FuelLog) {
+        log.isExcluded.toggle()
+        saveContext()
+        fetchLogs()
     }
     
     public func deleteLog(_ log: FuelLog) {
@@ -339,24 +357,26 @@ public final class FuelLogViewModel: ObservableObject {
         let calendar = Calendar.current
         let now = Date()
         
-        // 1. Vehicle 1: Toyota Prius (Hybrid Car)
+        // 1. Vehicle 1: Toyota Prius (Hybrid Car - Level Tracked)
         let prius = Vehicle(context: context)
         prius.id = UUID()
         prius.name = "Toyota Prius"
         prius.plateNumber = "WP CAB-2045"
         prius.vehicleType = "Car"
         prius.tankCapacity = 45.0
+        prius.tankCapacityLiters = 45.0
+        prius.fuelTrackingMode = FuelTrackingMode.levelTracked.rawValue
         prius.initialOdometer = 44500.0
         prius.cityFuelConsumption = 18.0
         prius.highwayFuelConsumption = 22.0
         
-        let priusLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String)] = [
-            (65, 44820.0, 18.5, 5753.50, "Ceypetco", "Colombo 07", 6.9014, 79.8631, "Petrol Octane 92", "City", "City driving refill"),
-            (50, 45180.0, 19.0, 5909.00, "Lanka IOC", "Kandy", 7.2906, 80.6337, "Petrol Octane 92", "Highway", "Kandy weekend trip via Expressway"),
-            (35, 45540.0, 18.2, 5660.20, "Sinopec", "Colombo 03", 6.9110, 79.8510, "Petrol Octane 92", "Mixed", "Regular commute fill"),
-            (20, 45910.0, 18.8, 5846.80, "Shell / RM Parks", "Peliyagoda", 6.9650, 79.8850, "Petrol Octane 95 (Premium)", "Highway", "Premium run on highway"),
-            (8,  46280.0, 18.6, 5784.60, "Ceypetco", "Welipenna Rest Area", 6.4421, 80.0542, "Petrol Octane 92", "Highway", "Southern Expressway run"),
-            (1,  46650.0, 18.4, 5722.40, "Lanka IOC", "Galle Fort", 6.0329, 80.2168, "Petrol Octane 92", "Mixed", "Full tank before returning")
+        let priusLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String, level: Double)] = [
+            (65, 44820.0, 18.5, 5753.50, "Ceypetco", "Colombo 07", 6.9014, 79.8631, "Petrol Octane 92", "City", "City driving refill", 0.55),
+            (50, 45180.0, 19.0, 5909.00, "Lanka IOC", "Kandy", 7.2906, 80.6337, "Petrol Octane 92", "Highway", "Kandy weekend trip via Expressway", 0.60),
+            (35, 45540.0, 18.2, 5660.20, "Sinopec", "Colombo 03", 6.9110, 79.8510, "Petrol Octane 92", "Mixed", "Regular commute fill", 0.58),
+            (20, 45910.0, 18.8, 5846.80, "Shell / RM Parks", "Peliyagoda", 6.9650, 79.8850, "Petrol Octane 95 (Premium)", "Highway", "Premium run on highway", 0.59),
+            (8,  46280.0, 18.6, 5784.60, "Ceypetco", "Welipenna Rest Area", 6.4421, 80.0542, "Petrol Octane 92", "Highway", "Southern Expressway run", 0.60),
+            (1,  46650.0, 18.4, 5722.40, "Lanka IOC", "Galle Fort", 6.0329, 80.2168, "Petrol Octane 92", "Mixed", "Full tank before returning", 0.58)
         ]
         
         for item in priusLogs {
@@ -374,16 +394,19 @@ public final class FuelLogViewModel: ObservableObject {
             log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
+            log.remainingFuelPercentBefore = NSNumber(value: item.level)
             log.vehicle = prius
         }
         
-        // 2. Vehicle 2: Suzuki Wagon R (Compact Car)
+        // 2. Vehicle 2: Suzuki Wagon R (Compact Car - Expenses Only)
         let wagonR = Vehicle(context: context)
         wagonR.id = UUID()
         wagonR.name = "Suzuki Wagon R"
         wagonR.plateNumber = "WP CAD-7890"
         wagonR.vehicleType = "Car"
         wagonR.tankCapacity = 32.0
+        wagonR.tankCapacityLiters = 32.0
+        wagonR.fuelTrackingMode = FuelTrackingMode.expensesOnly.rawValue
         wagonR.initialOdometer = 28000.0
         wagonR.cityFuelConsumption = 14.0
         wagonR.highwayFuelConsumption = 18.0
@@ -409,23 +432,26 @@ public final class FuelLogViewModel: ObservableObject {
             log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
+            log.remainingFuelPercentBefore = nil // Expenses only mode has no fuel level
             log.vehicle = wagonR
         }
         
-        // 3. Vehicle 3: Bajaj Pulsar 150 (Motorcycle)
+        // 3. Vehicle 3: Bajaj Pulsar 150 (Motorcycle - Level Tracked)
         let pulsar = Vehicle(context: context)
         pulsar.id = UUID()
         pulsar.name = "Bajaj Pulsar 150"
         pulsar.plateNumber = "SP BDG-4512"
         pulsar.vehicleType = "Motorcycle"
         pulsar.tankCapacity = 15.0
+        pulsar.tankCapacityLiters = 15.0
+        pulsar.fuelTrackingMode = FuelTrackingMode.levelTracked.rawValue
         pulsar.initialOdometer = 12000.0
         pulsar.cityFuelConsumption = 38.0
         pulsar.highwayFuelConsumption = 48.0
         
-        let pulsarLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String)] = [
-            (30, 12380.0, 8.5, 2643.50, "Ceypetco", "Matara", 5.9549, 80.5550, "Petrol Octane 92", "City", "Coastal ride"),
-            (12, 12760.0, 8.2, 2550.20, "Lanka IOC", "Tangalle", 6.0242, 80.7942, "Petrol Octane 92", "Highway", "Weekend beach ride")
+        let pulsarLogs: [(daysAgo: Int, odo: Double, vol: Double, cost: Double, station: String, locality: String, lat: Double, lon: Double, fuel: String, trip: String, notes: String, level: Double)] = [
+            (30, 12380.0, 8.5, 2643.50, "Ceypetco", "Matara", 5.9549, 80.5550, "Petrol Octane 92", "City", "Coastal ride", 0.40),
+            (12, 12760.0, 8.2, 2550.20, "Lanka IOC", "Tangalle", 6.0242, 80.7942, "Petrol Octane 92", "Highway", "Weekend beach ride", 0.45)
         ]
         
         for item in pulsarLogs {
@@ -443,6 +469,7 @@ public final class FuelLogViewModel: ObservableObject {
             log.tripType = item.trip
             log.notes = item.notes
             log.isFullTank = true
+            log.remainingFuelPercentBefore = NSNumber(value: item.level)
             log.vehicle = pulsar
         }
         
@@ -470,11 +497,15 @@ public final class FuelLogViewModel: ObservableObject {
         let initialOdo = selectedVehicle?.initialOdometer ?? 0.0
         let city = selectedVehicle?.effectiveCityConsumption ?? 10.0
         let hwy = selectedVehicle?.effectiveHighwayConsumption ?? 15.0
+        let tankCap = selectedVehicle?.effectiveTankCapacity ?? 45.0
+        let mode = selectedVehicle?.trackingMode ?? .levelTracked
         return FuelStatistics.compute(
             entries: fuelEntries,
             initialOdometer: initialOdo,
             cityTarget: city,
-            highwayTarget: hwy
+            highwayTarget: hwy,
+            tankCapacity: tankCap,
+            trackingMode: mode
         )
     }
     
