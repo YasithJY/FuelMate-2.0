@@ -246,6 +246,43 @@ def create_full_report():
         spacer.paragraph_format.space_before = Pt(0)
         spacer.paragraph_format.space_after = Pt(6)
 
+    def add_image_row(img_tuples):
+        """
+        img_tuples: list of (rel_path, caption)
+        Creates a table with len(img_tuples) columns, inserts the image scaled to fit,
+        and adds a centered caption paragraph below.
+        """
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        tbl = doc.add_table(rows=2, cols=len(img_tuples))
+        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+        col_width = Inches(6.5 / len(img_tuples))
+        
+        for i, (rel_path, caption) in enumerate(img_tuples):
+            img_path = os.path.join(base_dir, rel_path)
+            # Row 0: Image
+            cell_img = tbl.cell(0, i)
+            cell_img.width = col_width
+            p_img = cell_img.paragraphs[0]
+            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_img.paragraph_format.space_before = Pt(4)
+            p_img.paragraph_format.space_after = Pt(2)
+            if os.path.exists(img_path):
+                r_img = p_img.add_run()
+                r_img.add_picture(img_path, width=Inches(1.95))
+            
+            # Row 1: Caption
+            cell_cap = tbl.cell(1, i)
+            cell_cap.width = col_width
+            p_cap = cell_cap.paragraphs[0]
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.paragraph_format.space_before = Pt(2)
+            p_cap.paragraph_format.space_after = Pt(8)
+            r_cap = p_cap.add_run(caption)
+            r_cap.font.name = "Arial"
+            r_cap.font.size = Pt(8.0)
+            r_cap.italic = True
+            r_cap.font.color.rgb = MUTED_GRAY
+
     # -------------------------------------------------------------
     # COVER PAGE
     # -------------------------------------------------------------
@@ -491,7 +528,27 @@ def create_full_report():
     add_bullet("Open the Settings tab and tap 'Export Logs to CSV'.", bold_prefix="1. ")
     add_bullet("An iOS Share Sheet opens containing an RFC-4180 standard CSV file ready to share via AirDrop, Mail, WhatsApp, or open in Microsoft Excel, Apple Numbers, or Google Sheets.", bold_prefix="2. ")
 
-    add_h2("2.2 Localization & Sri Lankan Automotive Ecosystem Standards")
+    add_h2("2.2 Visual User Interface Gallery")
+    add_body(
+        "The following figures showcase the production iOS user interface captured directly from FuelMate 2.0 running on iOS 17.2+, demonstrating the responsive dark theme, multi-vehicle management, dual City/Highway baseline benchmarking, Sri Lankan fuel grades, and Swift Charts visual telemetry:"
+    )
+    add_image_row([
+        ("screenshots/01_dashboard_view.jpg", "Figure 2.1: Executive Dashboard & KPI Grid"),
+        ("screenshots/02_vehicle_management.jpg", "Figure 2.2: Multi-Vehicle Fleet Switcher"),
+        ("screenshots/03_add_vehicle_dual_baselines.jpg", "Figure 2.3: Dual Baseline Targets Setup")
+    ])
+    add_image_row([
+        ("screenshots/04_log_fillup_form.jpg", "Figure 2.4: Smart Fill-Up Log Form"),
+        ("screenshots/05_fuel_grades_dropdown.jpg", "Figure 2.5: Sri Lankan Fuel Varieties"),
+        ("screenshots/06_fuel_history_logs.jpg", "Figure 2.6: Chronological Fuel History")
+    ])
+    add_image_row([
+        ("screenshots/07_analytics_charts.jpg", "Figure 2.7: Swift Charts Expense Breakdown"),
+        ("screenshots/08_settings_fuel_prices.jpg", "Figure 2.8: Editable Fuel Price Engine"),
+        ("screenshots/09_settings_units_csv_export.jpg", "Figure 2.9: RFC-4180 CSV Export & Info")
+    ])
+
+    add_h2("2.3 Localization & Sri Lankan Automotive Ecosystem Standards")
     add_body(
         "FuelMate 2.0 provides first-class localization for Sri Lankan drivers while retaining instant toggles for international users:"
     )
@@ -906,6 +963,25 @@ Testing was conducted using Apple's XCTest framework with dedicated in-memory Co
    - Open the **Analytics** tab. Touch and drag across the fuel economy curve to scrub data points with haptic feedback.
 5. **Exporting Data for Spreadsheets & Taxes:**
    - In **Settings**, tap `Export Logs to CSV` to generate an RFC-4180 compliant CSV file via the iOS Share Sheet.
+
+---
+
+### 2.2 Visual User Interface Gallery
+
+| Dashboard | Vehicle Fleet | Dual Baselines Setup |
+| :---: | :---: | :---: |
+| <img src="screenshots/01_dashboard_view.jpg" width="225" /> | <img src="screenshots/02_vehicle_management.jpg" width="225" /> | <img src="screenshots/03_add_vehicle_dual_baselines.jpg" width="225" /> |
+| *Figure 2.1: Executive Dashboard & KPI Grid* | *Figure 2.2: Multi-Vehicle Fleet Switcher* | *Figure 2.3: Dual Baseline Targets Setup* |
+
+| Smart Fill-Up Logging | Sri Lankan Fuel Grades | Fuel History & Filters |
+| :---: | :---: | :---: |
+| <img src="screenshots/04_log_fillup_form.jpg" width="225" /> | <img src="screenshots/05_fuel_grades_dropdown.jpg" width="225" /> | <img src="screenshots/06_fuel_history_logs.jpg" width="225" /> |
+| *Figure 2.4: Smart Fill-Up Log Form* | *Figure 2.5: Sri Lankan Fuel Varieties* | *Figure 2.6: Chronological Fuel History* |
+
+| Swift Charts Analytics | Market Pricing Engine | Unit & CSV Tax Export |
+| :---: | :---: | :---: |
+| <img src="screenshots/07_analytics_charts.jpg" width="225" /> | <img src="screenshots/08_settings_fuel_prices.jpg" width="225" /> | <img src="screenshots/09_settings_units_csv_export.jpg" width="225" /> |
+| *Figure 2.7: Swift Charts Expense Breakdown* | *Figure 2.8: Editable Fuel Price Engine* | *Figure 2.9: RFC-4180 CSV Export & Info* |
 
 ---
 

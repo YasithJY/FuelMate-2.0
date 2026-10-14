@@ -110,6 +110,25 @@ Testing was conducted using Apple's XCTest framework with dedicated in-memory Co
 
 ---
 
+### 2.2 Visual User Interface Gallery
+
+| Dashboard | Vehicle Fleet | Dual Baselines Setup |
+| :---: | :---: | :---: |
+| <img src="screenshots/01_dashboard_view.jpg" width="225" /> | <img src="screenshots/02_vehicle_management.jpg" width="225" /> | <img src="screenshots/03_add_vehicle_dual_baselines.jpg" width="225" /> |
+| *Figure 2.1: Executive Dashboard & KPI Grid* | *Figure 2.2: Multi-Vehicle Fleet Switcher* | *Figure 2.3: Dual Baseline Targets Setup* |
+
+| Smart Fill-Up Logging | Sri Lankan Fuel Grades | Fuel History & Filters |
+| :---: | :---: | :---: |
+| <img src="screenshots/04_log_fillup_form.jpg" width="225" /> | <img src="screenshots/05_fuel_grades_dropdown.jpg" width="225" /> | <img src="screenshots/06_fuel_history_logs.jpg" width="225" /> |
+| *Figure 2.4: Smart Fill-Up Log Form* | *Figure 2.5: Sri Lankan Fuel Varieties* | *Figure 2.6: Chronological Fuel History* |
+
+| Swift Charts Analytics | Market Pricing Engine | Unit & CSV Tax Export |
+| :---: | :---: | :---: |
+| <img src="screenshots/07_analytics_charts.jpg" width="225" /> | <img src="screenshots/08_settings_fuel_prices.jpg" width="225" /> | <img src="screenshots/09_settings_units_csv_export.jpg" width="225" /> |
+| *Figure 2.7: Swift Charts Expense Breakdown* | *Figure 2.8: Editable Fuel Price Engine* | *Figure 2.9: RFC-4180 CSV Export & Info* |
+
+---
+
 # Section 3: System Architecture & Technical Specifications
 
 ```

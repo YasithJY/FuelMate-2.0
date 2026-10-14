@@ -17,6 +17,25 @@
 
 ---
 
+## 📱 App Screenshots
+
+| Dashboard | Vehicle Fleet | Dual Baselines Setup |
+| :---: | :---: | :---: |
+| <img src="screenshots/01_dashboard_view.jpg" width="225" /> | <img src="screenshots/02_vehicle_management.jpg" width="225" /> | <img src="screenshots/03_add_vehicle_dual_baselines.jpg" width="225" /> |
+| *Executive KPI grid & recent logs* | *Multi-vehicle fleet switcher* | *City/Highway target baselines* |
+
+| Smart Fill-Up Logging | Sri Lankan Fuel Grades | Fuel History & Filters |
+| :---: | :---: | :---: |
+| <img src="screenshots/04_log_fillup_form.jpg" width="225" /> | <img src="screenshots/05_fuel_grades_dropdown.jpg" width="225" /> | <img src="screenshots/06_fuel_history_logs.jpg" width="225" /> |
+| *Auto-calculation & GPS locality* | *Sri Lankan 6 fuel varieties* | *Brand filtering & search* |
+
+| Swift Charts Analytics | Market Pricing Engine | Unit & CSV Tax Export |
+| :---: | :---: | :---: |
+| <img src="screenshots/07_analytics_charts.jpg" width="225" /> | <img src="screenshots/08_settings_fuel_prices.jpg" width="225" /> | <img src="screenshots/09_settings_units_csv_export.jpg" width="225" /> |
+| *Monthly expense breakdown* | *Dynamic LKR/L fuel prices* | *RFC-4180 CSV export & info* |
+
+---
+
 ## 🌟 Key Features
 
 ### 🚘 1. Multi-Vehicle Fleet Management & Dual Baselines
