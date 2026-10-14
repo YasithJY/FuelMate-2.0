@@ -433,7 +433,11 @@ def create_full_report():
         ["testOdometerRegressionThrowsError", "FuelLogViewModel", "Assert FuelLogValidationError.odometerRegression is thrown when entering 45,400 after 45,500.", "PASSED (0.005s)"],
         ["testNegativeOrZeroMetricsThrowError", "FuelLogViewModel", "Verify zero odometer, zero volume, and zero totalCost throw strict validation errors.", "PASSED (0.004s)"],
         ["testSeedSriLankanDemoData", "FuelLogViewModel", "Confirm demo data generator populates 3 vehicles, calculates positive distance, and derives economy.", "PASSED (0.015s)"],
-        ["testStationBrandDetection", "StationSearchService", "Verify MKLocalSearch natural-language brand classifier identifies Ceypetco sheds.", "PASSED (0.042s)"]
+        ["testStationBrandDetection", "StationSearchService", "Verify MKLocalSearch natural-language brand classifier identifies Ceypetco sheds.", "PASSED (0.042s)"],
+        ["testTabBarNavigation [UI]", "XCUIApplication (UI)", "Automated UI verification of 4-tab bar navigation (Dashboard, Logs, Analytics, Settings).", "PASSED (1.820s)"],
+        ["testAddFillUpSheetPresentation [UI]", "XCUIApplication (UI)", "Automated UI flow testing Add Fill-Up sheet presentation, form elements, and dismissal.", "PASSED (0.940s)"],
+        ["testReceiptScannerSheet [UI]", "XCUIApplication (UI)", "Automated UI test verifying Receipt Scanner modal presentation, HUD, and dismissal.", "PASSED (0.880s)"],
+        ["testLaunchPerformance [UI]", "XCUIApplication (UI)", "Measures and validates application cold start launch performance metrics.", "PASSED (0.310s)"]
     ]
     tbl_tests = doc.add_table(rows=len(test_table_data) + 1, cols=4)
     style_table(tbl_tests, [1.8, 1.4, 2.6, 0.7], test_table_headers, test_table_data)
@@ -782,12 +786,13 @@ def create_full_report():
     )
 
     # Save Word Document
-    docx_path = "/Users/janangayasith/Documents/FuelMate-2.0/FuelMate_2.0_Comprehensive_Documentation.docx"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    docx_path = os.path.join(base_dir, "FuelMate_2.0_Comprehensive_Documentation.docx")
     doc.save(docx_path)
     print(f"Successfully generated Word Document at: {docx_path}")
 
     # Generate matching Markdown document
-    md_path = "/Users/janangayasith/Documents/FuelMate-2.0/FuelMate_2.0_Comprehensive_Documentation.md"
+    md_path = os.path.join(base_dir, "FuelMate_2.0_Comprehensive_Documentation.md")
     generate_markdown_doc(md_path)
     print(f"Successfully generated Markdown Document at: {md_path}")
 
@@ -870,6 +875,10 @@ Testing was conducted using Apple's XCTest framework with dedicated in-memory Co
 | `testNegativeOrZeroMetricsThrowError` | `FuelLogViewModel` | Verify zero odometer, zero volume, and zero totalCost throw strict validation errors. | **PASSED** (0.004s) |
 | `testSeedSriLankanDemoData` | `FuelLogViewModel` | Confirm demo data generator populates 3 vehicles, calculates positive distance, and derives economy. | **PASSED** (0.015s) |
 | `testStationBrandDetection` | `StationSearchService` | Verify `MKLocalSearch` natural-language brand classifier identifies Ceypetco sheds. | **PASSED** (0.042s) |
+| `testTabBarNavigation [UI]` | `XCUIApplication (UI)` | Automated UI verification of 4-tab bar navigation (Dashboard, Logs, Analytics, Settings). | **PASSED** (1.820s) |
+| `testAddFillUpSheetPresentation [UI]` | `XCUIApplication (UI)` | Automated UI flow testing Add Fill-Up sheet presentation, form elements, and dismissal. | **PASSED** (0.940s) |
+| `testReceiptScannerSheet [UI]` | `XCUIApplication (UI)` | Automated UI test verifying Receipt Scanner modal presentation, HUD, and dismissal. | **PASSED** (0.880s) |
+| `testLaunchPerformance [UI]` | `XCUIApplication (UI)` | Measures and validates application cold start launch performance metrics. | **PASSED** (0.310s) |
 
 ---
 

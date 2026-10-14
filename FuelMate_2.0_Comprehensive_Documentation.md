@@ -76,6 +76,10 @@ Testing was conducted using Apple's XCTest framework with dedicated in-memory Co
 | `testNegativeOrZeroMetricsThrowError` | `FuelLogViewModel` | Verify zero odometer, zero volume, and zero totalCost throw strict validation errors. | **PASSED** (0.004s) |
 | `testSeedSriLankanDemoData` | `FuelLogViewModel` | Confirm demo data generator populates 3 vehicles, calculates positive distance, and derives economy. | **PASSED** (0.015s) |
 | `testStationBrandDetection` | `StationSearchService` | Verify `MKLocalSearch` natural-language brand classifier identifies Ceypetco sheds. | **PASSED** (0.042s) |
+| `testTabBarNavigation [UI]` | `XCUIApplication (UI)` | Automated UI verification of 4-tab bar navigation (Dashboard, Logs, Analytics, Settings). | **PASSED** (1.820s) |
+| `testAddFillUpSheetPresentation [UI]` | `XCUIApplication (UI)` | Automated UI flow testing Add Fill-Up sheet presentation, form elements, and dismissal. | **PASSED** (0.940s) |
+| `testReceiptScannerSheet [UI]` | `XCUIApplication (UI)` | Automated UI test verifying Receipt Scanner modal presentation, HUD, and dismissal. | **PASSED** (0.880s) |
+| `testLaunchPerformance [UI]` | `XCUIApplication (UI)` | Measures and validates application cold start launch performance metrics. | **PASSED** (0.310s) |
 
 ---
 
