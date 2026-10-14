@@ -541,7 +541,7 @@ public struct LogDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 ShareLink(
-                    item: "FuelMate: \(log.stationName ?? "Fuel Stop") on \(log.date.formatted(date: .abbreviated, time: .omitted)) — Spent \(settings.formatCurrency(log.totalCost)) for \(settings.formatVolume(log.volume)) (\(settings.formatUnitPrice(log.unitPrice)))"
+                    item: "FuelMate: \(log.stationName ?? "Fuel Stop") on \(log.date.formatted(date: .abbreviated, time: .omitted)) - Spent \(settings.formatCurrency(log.totalCost)) for \(settings.formatVolume(log.volume)) (\(settings.formatUnitPrice(log.unitPrice)))"
                 ) {
                     Image(systemName: "square.and.arrow.up")
                 }

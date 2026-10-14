@@ -2,7 +2,7 @@
   <img src="LOGO.png" alt="FuelMate Logo" width="160" style="border-radius: 28px;" />
 </p>
 
-# ⛽ FuelMate 2.0 — Vehicle Fuel & Expense Tracker
+# ⛽ FuelMate 2.0 - Vehicle Fuel & Expense Tracker
 
 [![iOS 17.2+](https://img.shields.io/badge/iOS-17.2%2B-blue.svg?logo=apple&style=flat-square)](https://developer.apple.com/ios/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange.svg?logo=swift&style=flat-square)](https://swift.org)

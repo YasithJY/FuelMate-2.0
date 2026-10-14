@@ -42,7 +42,7 @@ def create_full_report():
     header = sections[0].header
     hp = header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    hrun = hp.add_run("FuelMate 2.0 — Part A: Advanced iOS Application Technical Report")
+    hrun = hp.add_run("FuelMate 2.0 - Part A: Advanced iOS Application Technical Report")
     hrun.font.name = "Arial"
     hrun.font.size = Pt(8.5)
     hrun.font.color.rgb = MUTED_GRAY
@@ -50,7 +50,7 @@ def create_full_report():
     footer = sections[0].footer
     fp = footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    frun = fp.add_run("SE4041: Mobile Application Design & Development  |  Assignment 2 — Part A (15%)")
+    frun = fp.add_run("SE4041: Mobile Application Design & Development  |  Assignment 2 - Part A (15%)")
     frun.font.name = "Arial"
     frun.font.size = Pt(8.5)
     frun.font.color.rgb = MUTED_GRAY
@@ -270,9 +270,9 @@ def create_full_report():
     
     runs_meta = [
         ("Student Author: ", True), ("Yazith JY (janangayasith)\n", False),
-        ("Degree Programme: ", True), ("BSc (Hons) in Information Technology — Year 4\n", False),
+        ("Degree Programme: ", True), ("BSc (Hons) in Information Technology - Year 4\n", False),
         ("Course / Module: ", True), ("SE4041 - Mobile Application Design & Development (MADD)\n", False),
-        ("Assessment: ", True), ("Assignment 02 — Part A: Advanced iOS App (15%)\n", False),
+        ("Assessment: ", True), ("Assignment 02 - Part A: Advanced iOS App (15%)\n", False),
         ("Target Platform: ", True), ("iOS 17.2+ (SwiftUI, Core Data, Apple Vision OCR, Swift Charts, MapKit)\n", False),
         ("Repository URL: ", True), ("https://github.com/YasithJY/FuelMate-2.0.git\n", False),
         ("Date: ", True), ("October 2026\n", False)
@@ -328,7 +328,7 @@ def create_full_report():
     # -------------------------------------------------------------
     add_h1("Executive Summary")
     add_body(
-        "FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application — 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit."
+        "FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application - 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit."
     )
 
     add_h1("Section 1: Purpose & Target Audience")
@@ -585,7 +585,7 @@ def create_full_report():
     print(f"Successfully generated Markdown Document at: {md_path}")
 
 def generate_markdown_doc(md_path):
-    content = """# ⛽ FuelMate 2.0 — Comprehensive Technical Report
+    content = """# ⛽ FuelMate 2.0 - Comprehensive Technical Report
 **Advanced Vehicle Expense & Fuel Telemetry Platform**  
 *Part A: Advanced iOS Application (15% Weightage)*
 
@@ -593,9 +593,9 @@ def generate_markdown_doc(md_path):
 
 ## Metadata
 * **Student Author:** Yazith JY (`janangayasith`)
-* **Degree Programme:** BSc (Hons) in Information Technology — Year 4
+* **Degree Programme:** BSc (Hons) in Information Technology - Year 4
 * **Course / Module:** SE4041 - Mobile Application Design & Development (MADD)
-* **Assessment:** Assignment 02 — Part A: Advanced iOS App (15%)
+* **Assessment:** Assignment 02 - Part A: Advanced iOS App (15%)
 * **Target OS:** iOS 17.2+ (SwiftUI, Core Data, Apple Vision OCR, Swift Charts, MapKit)
 * **Repository:** [https://github.com/YasithJY/FuelMate-2.0.git](https://github.com/YasithJY/FuelMate-2.0.git)
 * **Date:** October 2026
@@ -603,7 +603,7 @@ def generate_markdown_doc(md_path):
 ---
 
 ## Executive Summary
-FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application — 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit.
+FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application - 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit.
 
 ---
 

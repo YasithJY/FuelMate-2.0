@@ -1,4 +1,4 @@
-# ⛽ FuelMate 2.0 — Comprehensive Technical Report
+# ⛽ FuelMate 2.0 - Comprehensive Technical Report
 **Advanced Vehicle Expense & Fuel Telemetry Platform**  
 *Part A: Advanced iOS Application (15% Weightage)*
 
@@ -6,9 +6,9 @@
 
 ## Metadata
 * **Student Author:** Yazith JY (`janangayasith`)
-* **Degree Programme:** BSc (Hons) in Information Technology — Year 4
+* **Degree Programme:** BSc (Hons) in Information Technology - Year 4
 * **Course / Module:** SE4041 - Mobile Application Design & Development (MADD)
-* **Assessment:** Assignment 02 — Part A: Advanced iOS App (15%)
+* **Assessment:** Assignment 02 - Part A: Advanced iOS App (15%)
 * **Target OS:** iOS 17.2+ (SwiftUI, Core Data, Apple Vision OCR, Swift Charts, MapKit)
 * **Repository:** [https://github.com/YasithJY/FuelMate-2.0.git](https://github.com/YasithJY/FuelMate-2.0.git)
 * **Date:** October 2026
@@ -16,7 +16,7 @@
 ---
 
 ## Executive Summary
-FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application — 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit.
+FuelMate 2.0 is a production-grade iOS vehicle expense, fuel economy, and fleet management application engineered using SwiftUI, Core Data, Apple's native Vision framework, Swift Charts, and MapKit. Built strictly to satisfy all core criteria and rubric dimensions of Part A (Advanced iOS Application - 15%), this document presents the end-to-end technical report, architectural blueprints, user documentation with high-resolution UI screenshots, rigorous test verification matrix, and transparent AI collaboration audit.
 
 ---
 
