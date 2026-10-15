@@ -2,7 +2,7 @@
   <img src="LOGO.png" alt="FuelMate Logo" width="160" style="border-radius: 28px;" />
 </p>
 
-# ⛽ FuelMate - Vehicle Fuel & Expense Tracker
+# ⛽ FuelMate 2.0 - Vehicle Fuel & Expense Tracker
 
 [![iOS 17.2+](https://img.shields.io/badge/iOS-17.2%2B-blue.svg?logo=apple&style=flat-square)](https://developer.apple.com/ios/)
 [![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange.svg?logo=swift&style=flat-square)](https://swift.org)
@@ -13,7 +13,7 @@
 [![MapKit](https://img.shields.io/badge/Maps-MapKit-teal.svg?style=flat-square)](https://developer.apple.com/documentation/mapkit)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg?style=flat-square)](LICENSE)
 
-**FuelMate** is an enterprise-grade iOS automotive tracking application designed with **SwiftUI, Swift Charts, Core Data, MapKit, and Apple's Vision framework**. Tailored for high-accuracy fuel consumption monitoring, FuelMate provides dual City/Highway baseline benchmarking, live Sri Lankan market fuel pricing, bi-directional auto-calculations, on-device thermal receipt scanning, and GPS station mapping.
+**FuelMate 2.0** is an enterprise-grade iOS automotive tracking application designed with **SwiftUI, Swift Charts, Core Data, MapKit, and Apple's Vision framework**. Tailored for high-accuracy fuel consumption monitoring, FuelMate 2.0 provides dual City/Highway baseline benchmarking, live Sri Lankan market fuel pricing, bi-directional auto-calculations, on-device thermal receipt scanning, and GPS station mapping.
 
 ---
 
