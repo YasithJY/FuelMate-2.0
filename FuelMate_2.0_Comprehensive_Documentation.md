@@ -1,4 +1,4 @@
-# FuelMate 2.0 - Advanced Vehicle Expense & Fuel Telemetry Platform
+# FuelMate - Advanced Vehicle Expense & Fuel Telemetry Platform
 **Part A: Advanced iOS Application (15% Weightage) - Comprehensive Technical Report**  
 *Course: SE4041 - Mobile Application Design & Development (MADD)*
 
@@ -7,7 +7,7 @@
 ## Metadata
 * **Module Assignment Title:** SE4041 - Mobile Application Design & Development (MADD)
 * **Assessment:** Assignment 02 - Part A: Advanced iOS App (15% Weightage)
-* **Application Name:** FuelMate 2.0
+* **Application Name:** FuelMate
 * **Student Name:** Yasith JY
 * **Student ID:** IT22136374
 * **Degree Programme:** BSc (Hons) in Information Technology - Year 4 Semester 2
@@ -25,7 +25,7 @@ Automotive fuel expenditure represents one of the largest recurrent financial bu
 Existing mobile expense trackers present critical usability bottlenecks: cumbersome manual typing at noisy gas pumps, lack of multi-vehicle profile isolation, absence of dual City and Highway baseline benchmarking, zero awareness of localized fuel distribution networks (Ceypetco, Lanka IOC, Sinopec), and reliance on cloud analytics servers that monetize sensitive location and financial data without user consent.
 
 ### Proposed Solution
-FuelMate 2.0 is an enterprise-grade, offline-first iOS application engineered using SwiftUI, programmatic Core Data, Apple's native Vision framework, Swift Charts, and MapKit. The application eliminates pump-side data entry friction via on-device optical character recognition (OCR) of thermal receipts, dynamically calculates fuel expenditures against authentic Sri Lankan market prices, enables dual-baseline efficiency tracking, provides geospatial station discovery, and delivers hardware-accelerated telemetry with full privacy preservation.
+FuelMate is an enterprise-grade, offline-first iOS application engineered using SwiftUI, programmatic Core Data, Apple's native Vision framework, Swift Charts, and MapKit. The application eliminates pump-side data entry friction via on-device optical character recognition (OCR) of thermal receipts, dynamically calculates fuel expenditures against authentic Sri Lankan market prices, enables dual-baseline efficiency tracking, provides geospatial station discovery, and delivers hardware-accelerated telemetry with full privacy preservation.
 
 ### Target Users
 * **Daily Commuters & Private Vehicle Owners:** Drivers who require real-time efficiency metrics (km/L, MPG), cost-per-kilometer insights, and visual alerts when actual fuel economy drops below manufacturer baselines.
@@ -52,7 +52,7 @@ FuelMate 2.0 is an enterprise-grade, offline-first iOS application engineered us
 # 2. App Functionality
 
 ### 2.1 Core Features
-FuelMate 2.0 incorporates a rich set of production-grade features designed to provide an end-to-end fuel tracking and vehicle telemetry solution:
+FuelMate incorporates a rich set of production-grade features designed to provide an end-to-end fuel tracking and vehicle telemetry solution:
 
 1. **Multi-Vehicle Fleet Management:** Seamlessly create, edit, and switch between vehicles (*Cars, Motorcycles, SUVs, Vans, Three-Wheelers*). Each vehicle maintains an isolated database partition of logs, odometer baselines, and performance averages.
 2. **Dual Baseline Calibration:** Every vehicle profile includes calibrated Target City Fuel Consumption (km/L) and Target Highway Fuel Consumption (km/L). These baselines drive dynamic color-coded visual feedback across the dashboard and analytics.
@@ -85,7 +85,7 @@ FuelMate 2.0 incorporates a rich set of production-grade features designed to pr
 | *Figure 2.7: Swift Charts Fuel Economy & Monthly Expense* | *Figure 2.8: Editable Market Fuel Pricing Engine* | *Figure 2.9: Measurement Unit Preferences & CSV Export* |
 
 ### 2.2 Main User Flow
-The end-to-end user journey in FuelMate 2.0 is engineered for maximum speed and zero friction during roadside vehicle operation:
+The end-to-end user journey in FuelMate is engineered for maximum speed and zero friction during roadside vehicle operation:
 
 * **Phase 1: Vehicle Initialization:** Upon first launch, the user is presented with a clean onboarding prompt to register their primary vehicle, choose a vehicle category, and specify realistic City and Highway baseline consumption targets (e.g., 10.0 km/L city, 15.0 km/L highway for a hybrid sedan).
 * **Phase 2: Fill-Up Recording (Manual or Vision OCR):** At the fuel station, the user taps `+ Add Fill-Up` or `Scan Receipt`. If scanning, Apple's Vision framework parses the thermal receipt image and pre-fills volume, price, and brand. If entering manually, the user selects their fuel grade, enters the pump volume, and the total cost auto-populates.
@@ -94,7 +94,7 @@ The end-to-end user journey in FuelMate 2.0 is engineered for maximum speed and 
 * **Phase 5: Telemetry Scrubbing & Tax Export:** The user reviews historical trends on Swift Charts, scrubs across dates to inspect specific fuel spikes, and exports their entire log history as an RFC-4180 CSV document via iOS Share Sheet.
 
 ### 2.3 Robustness
-Robustness and fault tolerance are foundational engineering principles in FuelMate 2.0:
+Robustness and fault tolerance are foundational engineering principles in FuelMate:
 
 * **Odometer Monotonic Integrity:** Entering an odometer reading lower than the vehicle's last recorded fill-up throws `FuelLogValidationError.odometerRegression`. The UI renders an inline red error warning and completely disables the commit action, preventing mathematical corruption.
 * **Division-by-Zero Protection:** All fuel economy and cost-per-kilometer calculations strictly guard against zero distance spans (`deltaDistance > 0`) and zero volume inputs (`volume > 0`). If an initial or reset fill-up has zero distance span, the system gracefully defaults to baseline without crashing or showing NaN/Infinity.
@@ -107,7 +107,7 @@ Robustness and fault tolerance are foundational engineering principles in FuelMa
 # 3. Advanced UI and UX Design
 
 ### 3.1 Design System
-FuelMate 2.0 features a custom design system established in `Theme.swift`, providing visual consistency, depth, and enterprise polish across all views:
+FuelMate features a custom design system established in `Theme.swift`, providing visual consistency, depth, and enterprise polish across all views:
 
 * **Color System:** Semantic color hierarchy centered on Deep Navy (`#0A2540`) for structure, Electric Teal (`#008080`) for active highlights, Emerald Green (`#10B981`) for optimal efficiency, Warning Amber (`#F59E0B`) for below-baseline performance, and Error Coral (`#EF4444`) for validation faults.
 * **Card Architecture:** All content sections are wrapped in `ModernCardModifier` (`.modernCard()`), which applies continuous rounded corners (18pt), `ultraThinMaterial` or secondary grouped backgrounds, subtle 1pt borders (`Color.primary.opacity(0.06)`), and soft elevation shadows.
@@ -154,7 +154,7 @@ public struct ModernCardModifier: ViewModifier {
 * **Multi-Tiered Haptic Feedback:** Utilizes `UIImpactFeedbackGenerator` (light on brand selection, medium on save), `UINotificationFeedbackGenerator` (success on log completion, error on validation fault), and `UISelectionFeedbackGenerator` during chart touch scrubbing.
 
 ### 3.4 Responsive Layout
-FuelMate 2.0 provides adaptive layouts across diverse device form factors by leveraging `@Environment(\.horizontalSizeClass)`. On compact devices (iPhone in portrait), content stacks vertically in a scrollable flow. On regular width screens (iPad and iPhone landscape), the Dashboard automatically splits into a two-column layout with the circular gauge on the left and the 2x2 KPI grid on the right.
+FuelMate provides adaptive layouts across diverse device form factors by leveraging `@Environment(\.horizontalSizeClass)`. On compact devices (iPhone in portrait), content stacks vertically in a scrollable flow. On regular width screens (iPad and iPhone landscape), the Dashboard automatically splits into a two-column layout with the circular gauge on the left and the 2x2 KPI grid on the right.
 
 ### 3.5 Usability and Accessibility
 * **Universal Dark Mode:** Engineered strictly with semantic system colors (`systemBackground`, `secondarySystemGroupedBackground`, `label`, `secondaryLabel`), guaranteeing seamless visual adaptation between Light and Dark appearances.
@@ -167,7 +167,7 @@ FuelMate 2.0 provides adaptive layouts across diverse device form factors by lev
 # 4. Code Quality and Architecture
 
 ### 4.1 Project Structure
-The FuelMate 2.0 codebase is structured into clear modular folders separating views, viewmodels, persistent storage, and hardware service layers:
+The FuelMate codebase is structured into clear modular folders separating views, viewmodels, persistent storage, and hardware service layers:
 
 ```
 FuelMate/
@@ -252,7 +252,7 @@ graph TD
 # 5. Integration of Emerging Technologies
 
 ### 5.1 Technologies Used
-FuelMate 2.0 exceeds assignment expectations by integrating two advanced first-party Apple frameworks from the approved guidelines list:
+FuelMate exceeds assignment expectations by integrating two advanced first-party Apple frameworks from the approved guidelines list:
 
 1. **Apple Vision Framework (Machine Learning OCR):** Utilizes `VNRecognizeTextRequest` to perform 100% on-device optical character recognition on thermal petrol receipts without external cloud APIs.
 2. **Apple MapKit & CoreLocation (Geospatial Locator):** Utilizes `MKLocalSearch` to perform natural-language fuel shed discovery (e.g., *'Ceypetco Colombo'*, *'Lanka IOC shed'*) and CoreLocation for automatic locality reverse-geocoding.
@@ -267,7 +267,7 @@ The optical character recognition pipeline in `ReceiptScannerService.swift` exec
 * **Stage 5: Pre-Population Routing:** Extracted values are packaged into a `ReceiptScanResult` struct and injected directly into `AddLogView`, allowing the user to review and confirm the pre-filled fields.
 
 ### 5.3 Making ML Stable
-Thermal receipts from petrol stations present severe real-world challenges: faint ink, skewed paper, crinkles, low contrast, and non-standard typography. FuelMate 2.0 implements multiple stabilizing measures:
+Thermal receipts from petrol stations present severe real-world challenges: faint ink, skewed paper, crinkles, low contrast, and non-standard typography. FuelMate implements multiple stabilizing measures:
 
 * **Character Confusion Substitution:** The regex pre-processor identifies numeric fields and replaces common OCR misidentifications (e.g., uppercase letter 'O' or lowercase 'o' is replaced with digit '0'; uppercase 'I' or lowercase 'l' is replaced with digit '1').
 * **Keyword Proximity Scoring:** Rather than blindly taking the largest number, the parser searches for numeric amounts immediately adjacent to keywords like 'TOTAL', 'AMOUNT', 'NET', or 'PAID'.
@@ -284,7 +284,7 @@ Thermal receipts from petrol stations present severe real-world challenges: fain
 # 6. Testing and Optimization
 
 ### 6.1 Test Coverage
-FuelMate 2.0 was subjected to a comprehensive verification matrix covering unit, integration, validation, and automated UI test suites using Apple's XCTest framework:
+FuelMate was subjected to a comprehensive verification matrix covering unit, integration, validation, and automated UI test suites using Apple's XCTest framework:
 
 | Test Suite / Function | Target Subsystem | Validation Criterion | Status |
 | :--- | :--- | :--- | :--- |
@@ -314,7 +314,7 @@ FuelMate 2.0 was subjected to a comprehensive verification matrix covering unit,
 # 7. Innovation and Creativity
 
 ### Key Innovations and Differentiating Features
-FuelMate 2.0 distinguishes itself from generic vehicle loggers through five unique innovations tailored to modern automotive software engineering:
+FuelMate distinguishes itself from generic vehicle loggers through five unique innovations tailored to modern automotive software engineering:
 
 1. **Dual Baseline Calibration Architecture:** Unlike traditional apps that compare fuel economy against a single generic target, FuelMate implements separate City and Highway baselines. This accurately reflects real-world driving physics, where highway cruising yields significantly higher efficiency than stop-and-go urban traffic.
 2. **Sri Lankan Market Fuel Price Engine:** Built-in support for all 6 official fuel grades in Sri Lanka with live market defaults in LKR/L, editable settings, and bi-directional auto-calculation between volume and total expenditure.
@@ -324,7 +324,7 @@ FuelMate 2.0 distinguishes itself from generic vehicle loggers through five uniq
 
 ### Competitive Benchmark Matrix
 
-| Evaluation Criterion | FuelMate 2.0 | Fuelly | Drivvo | Simply Auto |
+| Evaluation Criterion | FuelMate | Fuelly | Drivvo | Simply Auto |
 | :--- | :--- | :--- | :--- | :--- |
 | **Dual City/Highway Baselines** | **YES (Calibrated)** | NO (Single static) | NO | NO |
 | **Sri Lankan Fuel Variety Engine** | **YES (6 Grades in LKR)** | NO (Generic) | NO (Generic) | NO (Generic) |
@@ -350,7 +350,7 @@ FuelMate 2.0 distinguishes itself from generic vehicle loggers through five uniq
   *Solution:* Re-architected `PersistenceController.swift` to assemble `NSEntityDescription`, `NSAttributeDescription`, and `NSRelationshipDescription` programmatically, guaranteeing 100% deterministic compilation.
 
 ### 8.2 What I Learned
-Developing FuelMate 2.0 provided deep practical mastery in production-grade iOS software engineering: designing reactive MVVM architectures with `@MainActor` thread isolation, implementing on-device machine learning with Apple's Vision framework, engineering accessible design systems adhering to Apple HIG, and establishing rigorous test suites using in-memory Core Data containers.
+Developing FuelMate provided deep practical mastery in production-grade iOS software engineering: designing reactive MVVM architectures with `@MainActor` thread isolation, implementing on-device machine learning with Apple's Vision framework, engineering accessible design systems adhering to Apple HIG, and establishing rigorous test suites using in-memory Core Data containers.
 
 #### Academic AI Collaboration Audit
 In compliance with assignment guidelines, AI interactions (using GitHub Copilot and ChatGPT) were documented and human-verified:
@@ -379,4 +379,4 @@ In compliance with assignment guidelines, AI interactions (using GitHub Copilot 
 6. **Run Test Suite:** Press `Cmd + U` to execute all unit, integration, and UI test suites. All tests will pass cleanly.
 
 ### 8.5 Conclusion
-FuelMate 2.0 successfully delivers a production-grade, highly responsive, and architecturally robust iOS vehicle telemetry application. By combining modern SwiftUI declarative layouts, programmatic Core Data persistence, on-device Apple Vision machine learning, MapKit geospatial intelligence, and hardware-accelerated Swift Charts, the project satisfies and exceeds every rubric criterion of SE4041 Assignment 2 (Part A: Advanced iOS Application - 15% Marks).
+FuelMate successfully delivers a production-grade, highly responsive, and architecturally robust iOS vehicle telemetry application. By combining modern SwiftUI declarative layouts, programmatic Core Data persistence, on-device Apple Vision machine learning, MapKit geospatial intelligence, and hardware-accelerated Swift Charts, the project satisfies and exceeds every rubric criterion of SE4041 Assignment 2 (Part A: Advanced iOS Application - 15% Marks).
