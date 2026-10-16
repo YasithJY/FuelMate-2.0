@@ -146,55 +146,7 @@ public struct ReceiptScannerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .disabled(isProcessing)
-                    
-                    // Quick Demo Thermal Receipt Tester
-                    Menu {
-                        Button("Ceypetco Receipt (Rs. 8,280.00 • 20.0 L Petrol 92)") {
-                            testWithSimulatedThermalReceipt(
-                                station: "Ceypetco",
-                                grade: "Petrol Octane 92",
-                                cost: 8280.0,
-                                volume: 20.0
-                            )
-                        }
-                        Button("Lanka IOC Receipt (Rs. 6,650.00 • 15.0 L Petrol 95)") {
-                            testWithSimulatedThermalReceipt(
-                                station: "Lanka IOC",
-                                grade: "Petrol Octane 95 (Premium)",
-                                cost: 6650.0,
-                                volume: 15.0
-                            )
-                        }
-                        Button("Sinopec Receipt (Rs. 7,840.00 • 20.0 L Auto Diesel)") {
-                            testWithSimulatedThermalReceipt(
-                                station: "Sinopec",
-                                grade: "Lanka Auto Diesel",
-                                cost: 7840.0,
-                                volume: 20.0
-                            )
-                        }
-                        Button("Shell / RM Parks (Rs. 8,700.00 • 20.0 L Super Diesel)") {
-                            testWithSimulatedThermalReceipt(
-                                station: "Shell / RM Parks",
-                                grade: "Lanka Super Diesel 4 Star (Euro 4)",
-                                cost: 8700.0,
-                                volume: 20.0
-                            )
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "sparkles")
-                            Text("Test with Sample Sri Lankan Receipt")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.secondary.opacity(0.08))
-                        .foregroundColor(.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
-                    .disabled(isProcessing)
+
                 }
                 .padding(.horizontal, 16)
                 
@@ -285,26 +237,7 @@ public struct ReceiptScannerView: View {
             }
         }
     }
-    
-    // MARK: - Simulated Thermal Receipt Runner
-    private func testWithSimulatedThermalReceipt(station: String, grade: String, cost: Double, volume: Double) {
-        isProcessing = true
-        scanStatusMessage = "Analyzing \(station) thermal receipt..."
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            let data = ScannedReceiptData(
-                totalCost: cost,
-                volume: volume,
-                stationName: station,
-                fuelGrade: grade,
-                rawText: "CEYLON PETROLEUM CORPORATION / LIOC\n\(station.uppercased())\nFUEL GRADE: \(grade.uppercased())\nVOLUME: \(volume) L\nTOTAL AMOUNT: RS. \(cost)"
-            )
-            self.scannedResult = data
-            self.isProcessing = false
-            Haptics.success()
-            self.showAddLogWithScannedData = true
-        }
-    }
+
 }
 
 // MARK: - Native UIKit Camera Controller Wrapper
